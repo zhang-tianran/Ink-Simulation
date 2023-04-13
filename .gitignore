@@ -9,6 +9,11 @@
 *.so.*
 *.dll
 *.dylib
+*.exe
+*.out
+*.app
+*.dll
+DaDDI
 
 # Qt-es
 object_script.*.Release
@@ -16,6 +21,7 @@ object_script.*.Debug
 *_plugin_import.cpp
 /.qmake.cache
 /.qmake.stash
+/.
 *.pro.user
 *.pro.user.*
 *.qbs.user
@@ -57,4 +63,18 @@ compile_commands.json
 .DS_Store
 
 build
+
+output/*
+.cmake/
+.ninja_deps
+.ninja_log
+.qt/
+.qtc_clangd/
+DaDDI_autogen/
+CMakeCache.txt
+CMakeFiles/
+*.c
+Testing/
+build.ninja
+*.cmake
 

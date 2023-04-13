@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
-project(simulation LANGUAGES CXX C)
+project(DaDDI LANGUAGES CXX C)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -39,7 +39,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt::Gui
     Qt::Widgets
     Qt::Xml
-    StaticGLEW
 )
 
 # This allows you to `#include "Eigen/..."`

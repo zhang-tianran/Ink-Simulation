@@ -3,44 +3,26 @@
 
 #include <iostream>
 #include <QImage>
+#include <fstream>
 
 
 int main(int argc, char* argv[])
 {
+    // CLI Stuff
     QCoreApplication a(argc, argv);
-
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("scene", "Scene file to be rendered");
     parser.addPositionalArgument("output", "Image file to write the rendered image to");
-
     parser.process(a);
 
-    // const QStringList args = parser.positionalArguments();
-    // if(args.size() != 2) {
-    //     std::cerr << "Error: Wrong number of arguments" << std::endl;
-    //     a.exit(1);
-    //     return 1;
-    // }
-    // QString scenefile = args[0];
-    // QString output = args[1];
-
-    // QImage image(IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format_RGB32);
+    // TODO: Write to example file
+    std::ofstream myfile;
+    std::cout<<"writing this to a file"<<std::endl;
+    myfile.open("output/EXAMPLEE.txt");
+    myfile << "Writing this to a file. \n";
+    myfile.close();
 
 
-    // QRgb *data = reinterpret_cast<QRgb *>(image.bits());
-
-    // tracer.traceScene(data, *scene);
-    // delete scene;
-
-    // bool success = image.save(output);
-    // if(!success) {
-    //     success = image.save(output, "PNG");
-    // }
-    // if(success) {
-    //     std::cout << "Wrote rendered image to " << output.toStdString() << std::endl;
-    // } else {
-    //     std::cerr << "Error: failed to write image to " << output.toStdString() << std::endl;
-    // }
     a.exit();
 }
