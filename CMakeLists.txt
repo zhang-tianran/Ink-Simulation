@@ -28,7 +28,7 @@ include_directories(libs)
 
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
-
+    main.cpp
 )
 
 
