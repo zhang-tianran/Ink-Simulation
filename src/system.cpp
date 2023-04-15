@@ -1,6 +1,7 @@
 #include "system.h"
 
-System::System()
-{
+System::System(){}
 
+void System::init() {
+    // TODO
 }
