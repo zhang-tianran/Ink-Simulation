@@ -28,7 +28,11 @@ include_directories(libs)
 
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
-    main.cpp
+    src/main.cpp
+    src/system.h
+    src/system.cpp
+    src/waterSolver.cpp
+    src/inkSolver.cpp
 )
 
 

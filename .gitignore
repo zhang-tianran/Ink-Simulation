@@ -71,7 +71,7 @@ output/*
 .qt/
 .qtc_clangd/
 DaDDI_autogen/
-CMakeCache.txt
+CMakeCache.*
 CMakeFiles/
 *.c
 Testing/

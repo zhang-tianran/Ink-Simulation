@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     // TODO: Write to example file
     std::ofstream myfile;
     std::cout<<"writing this to a file"<<std::endl;
-    myfile.open("output/EXAMPLEE.txt");
+    myfile.open("output/example2.txt"); // based off working directory not current file
     myfile << "Writing this to a file. \n";
     myfile.close();
 
