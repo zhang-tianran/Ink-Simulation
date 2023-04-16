@@ -78,3 +78,6 @@ Testing/
 build.ninja
 *.cmake
 
+# VSCode
+.vscode
+
