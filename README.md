@@ -10,7 +10,7 @@ Dynamic Ink Simulation for [CS2240](https://cs2240.graphics/) @ Brown CS
 ## Results
 
 ## Members
-Austin Miles - gizmo1479
-Helen Huang - **TODO**
-Mande He - **TODO**
+Austin Miles - gizmo1479\
+Helen Huang - **TODO**\
+Mande He - **TODO**\
 Ran Zhang - **TODO**
