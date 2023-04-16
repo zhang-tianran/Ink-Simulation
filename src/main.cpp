@@ -4,25 +4,21 @@
 #include <iostream>
 #include <QImage>
 #include <fstream>
+#include "inkSim.h"
 
 
+#define path "TODO: input something meaningful here"
 int main(int argc, char* argv[])
 {
     // CLI Stuff
     QCoreApplication a(argc, argv);
     QCommandLineParser parser;
     parser.addHelpOption();
-    parser.addPositionalArgument("scene", "Scene file to be rendered");
-    parser.addPositionalArgument("output", "Image file to write the rendered image to");
+    // parser.addPositionalArgument("numTimesteps", "Scene file to be rendered");
+    // parser.addPositionalArgument("numTotalsteps", "Image file to write the rendered image to");
     parser.process(a);
 
-    // TODO: Write to example file
-    std::ofstream myfile;
-    std::cout<<"writing this to a file"<<std::endl;
-    myfile.open("output/example2.txt"); // based off working directory not current file
-    myfile << "Writing this to a file. \n";
-    myfile.close();
-
-
+    InkSim sim(path);
+    sim.simulate(0, 0); // TODO: input stuff potentially
     a.exit();
 }
