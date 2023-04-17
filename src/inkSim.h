@@ -8,7 +8,7 @@ public:
     /**
      * @param fileDirectory, the path to the *directory* to save ply files to
     */
-    InkSim(std::string fileDirectory);
+    InkSim(std::string writeDirectory);
 
     /**
      * run the ink simulation
@@ -20,7 +20,7 @@ public:
 
 private:
     System ink_system;
-    std::string fileDirectory;
+    std::string writeDirectory;
 
     void writeToFile();
 };

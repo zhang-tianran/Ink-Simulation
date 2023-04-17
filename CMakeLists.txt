@@ -33,6 +33,7 @@ add_executable(${PROJECT_NAME}
     src/system.cpp
     src/waterSolver.cpp
     src/inkSim.h
+    src/inkSim.cpp
     src/inkSolver.cpp
 )
 

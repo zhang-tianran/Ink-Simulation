@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <QImage>
-#include <fstream>
 #include "inkSim.h"
 
 

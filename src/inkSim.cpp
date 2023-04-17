@@ -1,18 +1,19 @@
 #include "inkSim.h"
+#include <fstream>
 
-InkSim::InkSim(std::string fileDirectory) {
+InkSim::InkSim(std::string writeDirectory) {
     this->ink_system = System();
     this->ink_system.init();
-    this->fileDirectory = fileDirectory;
+    this->writeDirectory = writeDirectory;
 }
 
-void simulate(int numTimesteps, int totalTimesteps) {
+void InkSim::simulate(int numTimesteps, int totalTimesteps) {
     // TODO
 }
 
-void writeToFile() {
+void InkSim::writeToFile() {
     // TODO: Write to actual file with actualy data
-    std::string filename = this->fileDirectory + "/example.ply";
+    std::string filename = this->writeDirectory + "/example.ply";
     std::ofstream myfile;
     std::cout << "writing to: " + filename << std::endl;
     myfile.open(filename); // based off working directory not current file
