@@ -7,7 +7,7 @@ void System::solve(){
 }
 
 void System::updateParticles(float timeStep){
-    for (Particle inkPtcl: ink) {
+    for (Particle inkPtcl: m_ink) {
         // midpoint update
         Vector3f midCellVel; // = TODO: cell velocity of grid correspnding to current position
         Vector3f midPos = inkPtcl.position + inkPtcl.velocity * timeStep / 2.f;
