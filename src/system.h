@@ -50,8 +50,12 @@ private:
     void  initWaterGrid();
     float updateWaterGrid();
     float calcTimeStep();
-    void  updateGridFromMarkers();
-    void  updateVelocityField();
+    void  updateVelocityField(float timeStep);
+    void  applyConvection(float timeStep);
+    void  applyExternalForces(float timeStep);
+    void  applyViscosity(float timeStep);
+    void  calculatePressure();
+    void  applyPressure(float timeStep);
 
     /// Ink
     std::vector<Particle> m_ink;
