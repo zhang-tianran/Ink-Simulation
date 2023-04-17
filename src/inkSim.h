@@ -23,6 +23,6 @@ private:
     std::string fileDirectory;
 
     void writeToFile();
-}
+};
 
 #endif // INK_SIM_H
