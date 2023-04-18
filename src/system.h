@@ -19,6 +19,9 @@ const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
 typedef struct Cell {
     Eigen::Vector3f velocity;
     float pressure;
+
+    // enable printing for debugging
+    friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
 } Cell;
 
 typedef struct Particle {
@@ -26,6 +29,9 @@ typedef struct Particle {
     Eigen::Vector3f velocity;
     float opacity;  /// In [0, 1]
     float lifeTime;
+
+    // enable printing for debugging
+    friend std::ostream& operator<<(std::ostream& strm, const Particle& obj);
 } Particle;
 
 struct hash_func {
@@ -44,6 +50,8 @@ public:
     void init();
     void solve();
 
+    // enable printing for debugging
+    friend std::ostream& operator<<(std::ostream& strm, const System& obj);
 private:
     /// Water Grid
     std::unordered_map<Eigen::Vector3f, Cell, hash_func> m_waterGrid;

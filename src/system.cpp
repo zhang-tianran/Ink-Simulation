@@ -1,4 +1,5 @@
 #include "system.h"
+#include <stdlib.h>
 
 using namespace Eigen;
 using namespace std;
@@ -71,3 +72,38 @@ void System::initParticles() {
 }
 
 
+/************************** PRINTING UTILS *****************************/
+/// print a cell
+ostream& operator<<(ostream& strm, const Cell& obj) {
+    strm << "\tvelocity: (" << obj.velocity.x() << ", ";
+    strm << obj.velocity.y() << ", " << obj.velocity.z() << ")\n";
+    strm << "\tpressure: " << obj.pressure;
+}
+
+/// print a particle
+ostream& operator<<(ostream& strm, const Particle& obj) {
+    strm << "Particle: \n";
+    strm << "\tpos: (" << obj.position.x() << ", ";
+    strm << obj.position.y() << ", " << obj.position.z() << ")\n";
+    strm << "\tvelocity: (" << obj.velocity.x() << ", ";
+    strm << obj.velocity.y() << ", " << obj.velocity.z() << ")\n";
+    strm << "\topacity: " << obj.opacity;
+    strm << "\tlifetime: " << obj.lifeTime;
+}
+
+/// print the whole system
+ostream& operator<<(ostream& strm, const System& obj) {
+    strm << "********* PRINTING SYSTEM ***********\n";
+    strm << "********* PRINTING CELLS ***********\n";
+    for (auto& [k, v] : obj.m_waterGrid) {
+        strm << "Cell: \n";
+        strm << "\tpos in hashmap: " << k.x() << ", ";
+        strm << k.x() << ", " << k.z() << ")\n";
+        strm << v << endl;
+    }
+
+    strm << "********* PRINTING PARTICLES ***********\n";
+    for (auto& el : obj.m_ink) {
+        strm << el << endl;
+    }
+}
