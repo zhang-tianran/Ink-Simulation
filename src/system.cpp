@@ -48,9 +48,9 @@ Vector3f getRandPosWithinRange(float minX, float maxX,
                                float minY, float maxY,
                                float minZ, float maxZ) {
     return Vector3f{
-        minX + ((maxX - minX) / (arc4random() % 1000)),
-        minY + ((maxY - minY) / (arc4random() % 1000)),
-        minZ + ((maxZ - minZ) / (arc4random() % 1000)),
+        minX + ((maxX - minX) / (rand() % 1000)),
+        minY + ((maxY - minY) / (rand() % 1000)),
+        minZ + ((maxZ - minZ) / (rand() % 1000)),
     };
 }
 
@@ -73,11 +73,13 @@ void System::initParticles() {
 
 
 /************************** PRINTING UTILS *****************************/
+
 /// print a cell
 ostream& operator<<(ostream& strm, const Cell& obj) {
     strm << "\tvelocity: (" << obj.velocity.x() << ", ";
     strm << obj.velocity.y() << ", " << obj.velocity.z() << ")\n";
     strm << "\tpressure: " << obj.pressure;
+    return strm;
 }
 
 /// print a particle
@@ -89,6 +91,7 @@ ostream& operator<<(ostream& strm, const Particle& obj) {
     strm << obj.velocity.y() << ", " << obj.velocity.z() << ")\n";
     strm << "\topacity: " << obj.opacity;
     strm << "\tlifetime: " << obj.lifeTime;
+    return strm;
 }
 
 /// print the whole system
@@ -106,4 +109,5 @@ ostream& operator<<(ostream& strm, const System& obj) {
     for (auto& el : obj.m_ink) {
         strm << el << endl;
     }
+    return strm;
 }
