@@ -16,7 +16,7 @@ void System::init() {
 
 
 /**
- * Initializes a (WATERGRID_W x WATERGRID_H x WATERGRID_L) waterGrid
+ * Initializes a (WATERGRID_L x WATERGRID_W x WATERGRID_H) waterGrid
  *               ________________+ (WATERGRID_L, WATERGRID_W, WATERGRID_H)
  *             /               / |
  *           /               /   | <---- (WATERGRID_H)
@@ -41,6 +41,7 @@ void System::initWaterGrid() {
             }
         }
     }
+    assert(m_waterGrid.size() == WATERGRID_L*WATERGRID_W*WATERGRID_H);
 }
 
 /// Returns a random position within the specified ranges
@@ -60,15 +61,16 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_L/4.f, WATERGRID_L*3/4.f, 0.f, 0.f, WATERGRID_W/4.f, WATERGRID_W*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_L/4.f, WATERGRID_L*3/4.f, WATERGRID_H - 0.001, WATERGRID_H - 0.001, WATERGRID_W/4.f, WATERGRID_W*3/4.f), // CUSTOMIZABLE
             .velocity = Vector3f{0, -5, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
-            .lifeTime = 5.f
+            .lifeTime = 5.f // CUSTOMIZABLE
         };
 
         /// Insert into m_ink
         m_ink.push_back(particle);
     }
+    assert(m_ink.size() == INIT_NUM_PARTICLES);
 }
 
 
