@@ -16,23 +16,24 @@ void System::init() {
 
 
 /**
- * Initializes a (WATERGRID_L x WATERGRID_W x WATERGRID_H) waterGrid
- *               ________________+ (WATERGRID_L, WATERGRID_W, WATERGRID_H)
+ * Initializes a (WATERGRID_X x WATERGRID_Z x WATERGRID_Y) waterGrid
+ *               ________________+ (WATERGRID_X+1, WATERGRID_Z+1, WATERGRID_Y+1)
  *             /               / |
- *           /               /   | <---- (WATERGRID_H)
+ *           /               /   | <---- (WATERGRID_Y)
  *          /--------------/     |
  *          |              |    /
- *          |              |  / <----- (WATERGRID_W)
+ *          |              |  / <----- (WATERGRID_Z)
  * (0,0,0) +|______________|/
- *           (WATERGRID_L)
+ *           (WATERGRID_X)
  */
 void System::initWaterGrid() {
-    for (int l = 0; l < WATERGRID_L; l++) {
-        for (int w = 0; w < WATERGRID_W; w++) {
-            for (int h = 0; h < WATERGRID_H; h++) {
+    for (int l = 0; l < WATERGRID_X; l++) {
+        for (int w = 0; w < WATERGRID_Z; w++) {
+            for (int h = 0; h < WATERGRID_Y; h++) {
                 /// Create the cell
                 Cell cell {
-                    .velocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
+                    .old_velocity  = Vector3f{5, 0, 0}, // CUSTOMIZABLE
+                    .curr_velocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
                     .pressure = 0
                 };
 
@@ -41,7 +42,8 @@ void System::initWaterGrid() {
             }
         }
     }
-    assert(m_waterGrid.size() == WATERGRID_L*WATERGRID_W*WATERGRID_H);
+    assert(m_waterGrid.size() == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
+    initPressureA();
 }
 
 /// Returns a random position within the specified ranges
@@ -61,7 +63,7 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_L/4.f, WATERGRID_L*3/4.f, WATERGRID_H - 0.001, WATERGRID_H - 0.001, WATERGRID_W/4.f, WATERGRID_W*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
             .velocity = Vector3f{0, -5, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE

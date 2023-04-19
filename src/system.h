@@ -3,21 +3,28 @@
 #include <vector>
 #include <unordered_map>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
+
+typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_W        = 4; /// Water grid width
-const int WATERGRID_H        = 4; /// Water grid height
-const int WATERGRID_L        = 4; /// Water grid length
+const int WATERGRID_Z        = 4; /// Water grid width
+const int WATERGRID_Y        = 4; /// Water grid height
+const int WATERGRID_X        = 4; /// Water grid length
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
 const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
+
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -.98, 0);
 // ==============================================
 
 typedef struct Cell {
-    Eigen::Vector3f velocity;
+    Eigen::Vector3f old_velocity;
+    Eigen::Vector3f curr_velocity;
     float pressure;
 
     // enable printing for debugging
@@ -64,7 +71,7 @@ private:
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
     void  applyViscosity(float timeStep);
-    void  calculatePressure();
+    MatrixXf  calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
 
     /// Ink
@@ -73,8 +80,25 @@ private:
     void updateParticles(float timeStep);
 
     /// helper
+    Vector3f getGradient(int l, int w, int h, MatrixXf g);
+    float getDivergence(int l, int w, int h);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
+    std::vector<Vector3i> System::getGridNeighbors(int l, int w, int h);
+    Eigen::Vector3i getCellIndexFromPoint(int l, int w, int h);
+    Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     float getInterpolatedValue(float x, float y, float z, int idx);
+    
+    // check if a point (x, y, z) is in bounds
+    bool isInBounds(float x, float y, float z);
+    bool isInBoundsbyIdx(int x, int y, int z);
+
+    // pressure
+    int grid2mat(int l, int w, int h) {
+        return l * WATERGRID_X + w * WATERGRID_Y + h; 
+    };
+    Eigen::SimplicialLLT<SpMat> llt;
+    void initPressureA();
+
 };
 
 
