@@ -49,6 +49,7 @@ public:
 
     void init();
     void solve();
+    const std::vector<Particle>& getInkParticles();
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const System& obj);

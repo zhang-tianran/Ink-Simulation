@@ -23,6 +23,7 @@ private:
     std::string writeDirectory;
 
     void writeToFile();
+    void writeToFile(int frameNum);
 };
 
 #endif // INK_SIM_H

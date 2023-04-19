@@ -6,7 +6,7 @@
 #include "inkSim.h"
 
 
-#define path "TODO: input something meaningful here"
+#define path "output" // Directory name to write to
 int main(int argc, char* argv[])
 {
     // CLI Stuff
@@ -18,6 +18,6 @@ int main(int argc, char* argv[])
     parser.process(a);
 
     InkSim sim(path);
-    sim.simulate(0, 0); // TODO: input stuff potentially
+    sim.simulate(5, 10); // TODO: input stuff potentially
     a.exit();
 }

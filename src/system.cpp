@@ -73,6 +73,10 @@ void System::initParticles() {
     assert(m_ink.size() == INIT_NUM_PARTICLES);
 }
 
+/************************** GETTERS ************************************/
+const std::vector<Particle>& System::getInkParticles() {
+    return m_ink;
+}
 
 /************************** PRINTING UTILS *****************************/
 
