@@ -37,7 +37,7 @@ void System::initWaterGrid() {
                 };
 
                 /// Insert into m_waterGrid
-                m_waterGrid.insert({Vector3f{l, w, h}, cell});
+                m_waterGrid.insert({Vector3i{l, w, h}, cell});
             }
         }
     }
