@@ -19,25 +19,25 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
 }
 
 float System::getDivergence(int i, int j, int k){
-    Vector3f vel = m_waterGrid[Vector3i(i, j, k)].oldVelocity;
+    Vector3f vel = m_waterGrid.at(Vector3i(i, j, k)).oldVelocity;
     float divergence = - vel[0] - vel[1] - vel[2];
     if (isInBoundsbyIdx(i + 1, j, k)) {
-        divergence += m_waterGrid[Vector3i(i + 1, j, k)].oldVelocity[0];
+        divergence += m_waterGrid.at(Vector3i(i + 1, j, k)).oldVelocity[0];
     }
     if (isInBoundsbyIdx(i, j + 1, k)) {
-        divergence += m_waterGrid[Vector3i(i, j + 1, k)].oldVelocity[1];
+        divergence += m_waterGrid.at(Vector3i(i, j + 1, k)).oldVelocity[1];
     }
     if (isInBoundsbyIdx(i, j, k + 1)) {
-        divergence += m_waterGrid[Vector3i(i, j, k + 1)].oldVelocity[2];
+        divergence += m_waterGrid.at(Vector3i(i, j, k + 1)).oldVelocity[2];
     }
     return divergence;
 }
 
 //// Get the interpolated velocity at a point in space.
 Vector3f System::getVelocity(Vector3f pos){
-    float x = getInterpolatedValue(pos[0] / CELL_DIM,        pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM - 0.5f, 0);
-    float y = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM,        pos[2] / CELL_DIM - 0.5f, 1);
-    float z = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM,        2);
+    float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0);
+    float y = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f, pos[1] / CELL_DIM,         (pos[2] / CELL_DIM) - 0.5f, 1);
+    float z = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f,(pos[1] / CELL_DIM) - 0.5f,  pos[2] / CELL_DIM,         2);
     return Vector3f(x, y, z);
 }
 
@@ -67,9 +67,9 @@ std::vector<Vector3i> System::getGridNeighbors(int i, int j, int k){
 //// Checks whether a point position is within bounds of the waterGrid
 bool System::isInBounds(float x, float y, float z) {
     // TODO: bounds checking here?
-    bool xIs = (x >= 0) && (x <= WATERGRID_X*CELL_DIM);
-    bool yIs = (y >= 0) && (y <= WATERGRID_Y*CELL_DIM);
-    bool zIs = (z >= 0) && (z <= WATERGRID_Z*CELL_DIM);
+    bool xIs = (x >= 0) && (x < WATERGRID_X*CELL_DIM);
+    bool yIs = (y >= 0) && (y < WATERGRID_Y*CELL_DIM);
+    bool zIs = (z >= 0) && (z < WATERGRID_Z*CELL_DIM);
     return xIs && yIs && zIs;
 }
 
@@ -91,41 +91,41 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
     
     if (isInBounds(i, j, k)) {
         weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
-        totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i, j, k)].oldVelocity[idx];
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * m_waterGrid.at(Vector3i(i, j, k)).oldVelocity[idx];
     }
 
     if (isInBounds(i + 1, j, k)) {
-        totalAccum  += (x - i) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j, k)].oldVelocity[idx];
+        totalAccum  += (x - i) * (j + 1 - y) * (k + 1 - z) * m_waterGrid.at(Vector3i(i + 1, j, k)).oldVelocity[idx];
         weightAccum += (x - i) * (j + 1 - y) * (k + 1 - z);
     }
 
     if (isInBounds(i, j+1, k)) {
-        totalAccum  += (i + 1 - x) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i, j + 1, k)].oldVelocity[idx];
+        totalAccum  += (i + 1 - x) * (y - j) * (k + 1 - z) * m_waterGrid.at(Vector3i(i, j + 1, k)).oldVelocity[idx];
         weightAccum += (i + 1 - x) * (y - j) * (k + 1 - z);
     }
 
     if (isInBounds(i + 1, j+1, k)) {
-        totalAccum  += (x - i) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j + 1, k)].oldVelocity[idx];
+        totalAccum  += (x - i) * (y - j) * (k + 1 - z) * m_waterGrid.at(Vector3i(i + 1, j + 1, k)).oldVelocity[idx];
         weightAccum += (x - i) * (y - j) * (k + 1 - z);
     }
 
     if (isInBounds(i, j, k+1)) {
-        totalAccum  += (i + 1 - x) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i, j, k + 1)].oldVelocity[idx];
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (z - k) * m_waterGrid.at(Vector3i(i, j, k + 1)).oldVelocity[idx];
         weightAccum += (i + 1 - x) * (j + 1 - y) * (z - k);
     }
 
     if (isInBounds(i+1, j, k+1)) {
-        totalAccum += (x - i) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i + 1, j, k + 1)].oldVelocity[idx];
+        totalAccum += (x - i) * (j + 1 - y) * (z - k) * m_waterGrid.at(Vector3i(i + 1, j, k + 1)).oldVelocity[idx];
         totalAccum += (x - i) * (j + 1 - y) * (z - k);
     }
     
     if (isInBounds(i, j+1, k+1)) {
-        totalAccum  += (i + 1 - x) * (y - j) * (z - k) * m_waterGrid[Vector3i(i, j + 1, k + 1)].oldVelocity[idx];
+        totalAccum  += (i + 1 - x) * (y - j) * (z - k) * m_waterGrid.at(Vector3i(i, j + 1, k + 1)).oldVelocity[idx];
         weightAccum += (i + 1 - x) * (y - j) * (z - k);
     }
 
     if (isInBounds(i+1, j+1, k+1)) {
-        totalAccum  += (x - i) * (y - j) * (z - k) * m_waterGrid[Vector3i(i + 1, j + 1, k + 1)].oldVelocity[idx];
+        totalAccum  += (x - i) * (y - j) * (z - k) * m_waterGrid.at(Vector3i(i + 1, j + 1, k + 1)).oldVelocity[idx];
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 

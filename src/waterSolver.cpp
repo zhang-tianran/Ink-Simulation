@@ -15,7 +15,13 @@ float System::calcTimeStep() {
             maxVelocity = kv.second.oldVelocity.norm();
         }
     }
-    return K_CFL * (CELL_DIM /maxVelocity);
+    if (maxVelocity == 0) {
+        return MIN_TIMESTEP;
+    } else {
+        float timeStep = K_CFL * (CELL_DIM / maxVelocity);;
+        timeStep = std::max(std::min(timeStep, MAX_TIMESTEP), MIN_TIMESTEP);
+        return timeStep;
+    }
 }
 
 /// See "Fluid Flow 4 the Rest of Us" Paper for more details
@@ -39,7 +45,7 @@ void System::updateVelocityField(float timeStep) {
 
 Vector3f System::traceParticle(float x, float y, float z, float t) {
     Vector3f vel = getVelocity(Vector3f(x, y, z));
-    vel = getVelocity(Vector3f(x + .5*t*vel.x(), y + .5*t*vel.y(), z + .5*t*vel.z()));
+    vel = getVelocity(Vector3f(x + 0.5*t*vel.x(), y + 0.5*t*vel.y(), z + 0.5*t*vel.z()));
     return Vector3f(x, y, z) + t*vel;
 }
 
@@ -54,10 +60,13 @@ void System::applyConvection(float timeStep) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 Cell currCell = m_waterGrid.at(Vector3i{i, j, k});
-                Vector3f virtualParticlePos = traceParticle(i + CELL_DIM/2.f, j + CELL_DIM/2.f, k + CELL_DIM/2.f, -timeStep); // TODO: How to handle when virtual particle is outside the watarGrid???
-                if (isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) { // Temporary fix to above question
-                    currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+                Vector3f virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep);
+
+                if (!isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
+                    continue;
                 }
+
+                currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
             }
         }
     }
@@ -110,7 +119,7 @@ void System::applyViscosity(float timeStep) {
                 float u_x = laplacianOperatorOnVelocity(i, j, k, 0);
                 float u_y = laplacianOperatorOnVelocity(i, j, k, 1);
                 float u_z = laplacianOperatorOnVelocity(i, j, k, 2);
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += Vector3f{u_x, u_y, u_z};
+                m_waterGrid.at(Vector3i(i, j, k)).currVelocity += Vector3f{u_x, u_y, u_z};
             }
         }
     }
@@ -163,7 +172,7 @@ void System::applyPressure(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 Vector3f gradient = getGradient(i, j, k, pressure);
-                m_waterGrid[Vector3i(i, j, k)].currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
+                m_waterGrid.at(Vector3i(i, j, k)).currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
             }
         }
     }

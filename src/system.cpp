@@ -32,8 +32,8 @@ void System::initWaterGrid() {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 /// Create the cell
                 Cell cell {
-                    .oldVelocity  = Vector3f{5, 0, 0}, // CUSTOMIZABLE
-                    .currVelocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
+                    .oldVelocity  = Vector3f(0, 0, 0), // CUSTOMIZABLE
+                    .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
                 };
 
                 /// Insert into m_waterGrid
@@ -41,6 +41,8 @@ void System::initWaterGrid() {
             }
         }
     }
+    float product = WATERGRID_X*WATERGRID_Z*WATERGRID_Y;
+    float size = m_waterGrid.size();
     assert(m_waterGrid.size() == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
     initPressureA();
 }
@@ -63,7 +65,7 @@ void System::initParticles() {
         /// Create the particle
         Particle particle {
             .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
-            .velocity = Vector3f{0, -5, 0}, // CUSTOMIZABLE
+            .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE
         };

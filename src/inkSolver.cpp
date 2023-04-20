@@ -16,6 +16,8 @@ void System::updateParticles(float timeStep){
         inkPtcl.position += timeStep * finalVel;
         inkPtcl.velocity = finalVel;
 
+        int test = 0;
+
         // opacity
         // lifetime
     }
