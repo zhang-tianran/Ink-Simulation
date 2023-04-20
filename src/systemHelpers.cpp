@@ -129,5 +129,8 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 
+    if (weightAccum == 0) {
+        return 0;
+    }
     return totalAccum / weightAccum;
 }
