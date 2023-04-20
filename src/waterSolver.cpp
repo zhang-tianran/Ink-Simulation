@@ -118,7 +118,7 @@ void System::initPressureA() {
                 int row_idx = grid2mat(i, j, k);
                 std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
                 for (Vector3i neighbor : neighbors) {
-                    A.insert(row_idx, grid2mat(neighbor[0], neighbor[1], neighbor[2]));
+                    A.insert(row_idx, grid2mat(neighbor[0], neighbor[1], neighbor[2])) = 1;
                 }
 
                 A.insert(row_idx, row_idx) = -6;
