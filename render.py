@@ -5,10 +5,11 @@
 # See: http://blender.stackexchange.com/questions/24133/modify-obj-after-import-using-python
 # and: http://blenderartists.org/forum/showthread.php?320309-How-to-import-ply-files-from-script
 import bpy
+from typing import Tuple
 
 # Options.
-meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
-renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
+meshFolder = "output"  # Folder without ending "\\".
+renderFolder = "output"  # Output folder (without ending "\\").
 materialName = "Material"  # Material name for the imported object. The Material already needs to be created.
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
@@ -44,6 +45,30 @@ def MeshPath(folder = "", frame = 0, fileEnding = "ply"):
 def RenderPath(folder = "", frame = 0, fileEnding = "png"):
 	return folder + "/" + str(frame).zfill(AmountOfNumbers) + "." + fileEnding
 
+def create_camera(location: Tuple[float, float, float]) -> bpy.types.Object:
+    bpy.ops.object.camera_add(location=location)
+    return bpy.context.object
+
+def set_camera_params(camera: bpy.types.Camera,
+                      focus_target_object: bpy.types.Object,
+                      lens: float = 85.0,
+                      fstop: float = 1.4) -> None:
+    # Simulate Sony's FE 85mm F1.4 GM
+    camera.sensor_fit = 'HORIZONTAL'
+    camera.sensor_width = 36.0
+    camera.sensor_height = 24.0
+    camera.lens = lens
+    camera.dof.use_dof = True
+    camera.dof.focus_object = focus_target_object
+    camera.dof.aperture_fstop = fstop
+    camera.dof.aperture_blades = 11
+    
+def add_track_to_constraint(camera_object: bpy.types.Object, track_to_target_object: bpy.types.Object) -> None:
+    constraint = camera_object.constraints.new(type='TRACK_TO')
+    constraint.target = track_to_target_object
+    constraint.track_axis = 'TRACK_NEGATIVE_Z'
+    constraint.up_axis = 'UP_Y'
+
 def RenderSequence(startFrame = 0, endFrame = 1):
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
@@ -70,8 +95,15 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 			# if there is no material append it
 			importedObject.data.materials.append(material)
 			
+		## Camera
+		camera_object = create_camera(location=(0.0, 0.0, 0.0))
+
+		add_track_to_constraint(camera_object, importedObject)
+		set_camera_params(camera_object.data, importedObject, lens=72, fstop=0.5)
+
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
+		bpy.data.scenes["Scene"].camera = camera_object
 		bpy.ops.render.render(write_still = True) 
 
 		# Delete the imported object again.
