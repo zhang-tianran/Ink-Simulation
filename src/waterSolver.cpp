@@ -9,7 +9,13 @@ float System::updateWaterGrid() {
 }
 
 float System::calcTimeStep() {
-    return 0;
+    float maxVelocity = 0;
+    for (auto kv : m_waterGrid) {
+        if (maxVelocity < kv.second.oldVelocity.norm()) {
+            maxVelocity = kv.second.oldVelocity.norm();
+        }
+    }
+    return K_CFL * (CELL_DIM /maxVelocity);
 }
 
 /// See "Fluid Flow 4 the Rest of Us" Paper for more details
@@ -48,8 +54,10 @@ void System::applyConvection(float timeStep) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 Cell currCell = m_waterGrid.at(Vector3i{i, j, k});
-                Vector3f virtualParticlePos = traceParticle(i + CELL_DIM/2.f, j + CELL_DIM/2.f, k + CELL_DIM/2.f, -timeStep);
-                currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+                Vector3f virtualParticlePos = traceParticle(i + CELL_DIM/2.f, j + CELL_DIM/2.f, k + CELL_DIM/2.f, -timeStep); // TODO: How to handle when virtual particle is outside the watarGrid???
+                if (isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) { // Temporary fix to above question
+                    currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+                }
             }
         }
     }

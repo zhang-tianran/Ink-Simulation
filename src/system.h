@@ -20,6 +20,7 @@ const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -.98, 0);
+const float K_CFL = 1;
 // ==============================================
 
 typedef struct Cell {

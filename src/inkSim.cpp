@@ -7,9 +7,9 @@ InkSim::InkSim(std::string writeDirectory) {
 }
 
 void InkSim::simulate(int numTimesteps, int totalTimesteps) {
-    // TODO
     int timestepCounter = 1;
     while (timestepCounter <= totalTimesteps) {
+        this->ink_system.solve();
         if (timestepCounter % numTimesteps == 0) {
             writeToFile(timestepCounter/numTimesteps);
         }
