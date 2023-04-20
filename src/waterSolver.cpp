@@ -1,4 +1,5 @@
 #include "system.h"
+
 using namespace Eigen;
 
 float System::updateWaterGrid() {
@@ -57,9 +58,11 @@ void System::applyExternalForces(float timeStep) {
     for (auto &kv : m_waterGrid) {
         /// Applies gravity
         kv.second.currVelocity += gravity * timeStep;
-        kv.second.oldVelocity = kv.second.currVelocity;
 
         // TODO: Add vorticity confinement force
+
+
+        kv.second.oldVelocity = kv.second.currVelocity;
     }
 }
 
@@ -158,6 +161,7 @@ void System::applyPressure(float timeStep) {
                 int row_idx = grid2mat(l, w, h);
                 Vector3f gradient = getGradient(l, w, h, pressure);
                 m_waterGrid[Vector3i(l, w, h)].currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
+                m_waterGrid[Vector3i(l, w, h)].oldVelocity = m_waterGrid[Vector3i(l, w, h)].currVelocity;
             }
         }
     }
