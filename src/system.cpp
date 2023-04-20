@@ -108,7 +108,7 @@ ostream& operator<<(ostream& strm, const System& obj) {
     strm << "********* PRINTING CELLS ***********\n";
     for (auto& [k, v] : obj.m_waterGrid) {
         strm << "Cell: \n";
-        strm << "\tpos in hashmap: " << k.x() << ", ";
+        strm << "\tpos in hashmap: (" << k.x() << ", ";
         strm << k.x() << ", " << k.z() << ")\n";
         strm << v << endl;
     }

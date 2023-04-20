@@ -1,5 +1,6 @@
 #include "system.h"
 using namespace Eigen;
+using namespace std;
 
 void System::solve(){
     float timeStep = updateWaterGrid();
@@ -14,7 +15,10 @@ void System::updateParticles(float timeStep){
         Vector3f finalVel = getVelocity(midPos);
         // final update
         inkPtcl.position += timeStep * finalVel;
-        inkPtcl.velocity = finalVel;
+        inkPtcl.velocity = finalVel; // TODO: this field is never used...
+
+        Vector3f test = timeStep * finalVel;
+        cout << test[0] << ", " << test[1] << ", " << test[2] << endl;
 
         // opacity
         // lifetime

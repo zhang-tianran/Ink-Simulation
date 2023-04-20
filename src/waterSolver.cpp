@@ -119,7 +119,7 @@ void System::applyViscosity(float timeStep) {
                 float u_x = laplacianOperatorOnVelocity(i, j, k, 0);
                 float u_y = laplacianOperatorOnVelocity(i, j, k, 1);
                 float u_z = laplacianOperatorOnVelocity(i, j, k, 2);
-                m_waterGrid.at(Vector3i(i, j, k)).currVelocity += Vector3f{u_x, u_y, u_z};
+                m_waterGrid.at(Vector3i(i, j, k)).currVelocity += VISCOSITY * Vector3f{u_x, u_y, u_z};
             }
         }
     }
