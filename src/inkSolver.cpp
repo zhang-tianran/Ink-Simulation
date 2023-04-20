@@ -7,7 +7,7 @@ void System::solve(){
 }
 
 void System::updateParticles(float timeStep){
-    for (Particle inkPtcl: m_ink) {
+    for (Particle &inkPtcl: m_ink) {
         // midpoint velocity
         Vector3f midVel = getVelocity(inkPtcl.position);
         Vector3f midPos = inkPtcl.position + midVel * timeStep / 2.f;

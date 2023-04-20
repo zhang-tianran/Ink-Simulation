@@ -14,10 +14,21 @@ float System::calcTimeStep() {
 
 /// See "Fluid Flow 4 the Rest of Us" Paper for more details
 void System::updateVelocityField(float timeStep) {
+    /// Error Checking
+    for (auto &kv : m_waterGrid) {
+        assert(kv.second.oldVelocity == kv.second.currVelocity);
+    }
+
+    /// Navier-Stokes equation
     applyConvection(timeStep);
     applyExternalForces(timeStep);
     applyViscosity(timeStep);
     applyPressure(timeStep);
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
 }
 
 Vector3f System::traceParticle(float x, float y, float z, float t) {
@@ -32,10 +43,6 @@ Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
 
 /// Applies the convection term in the Navier-Stokes equation to each cell's velocity
 void System::applyConvection(float timeStep) {
-    for (auto &kv : m_waterGrid) {
-        assert(kv.second.oldVelocity == kv.second.currVelocity);
-    }
-
     /// Update each cell's curr_velocity in the waterGrid...
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
@@ -45,11 +52,6 @@ void System::applyConvection(float timeStep) {
                 currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
             }
         }
-    }
-
-    /// Update each cell's old_velocity to be the curr_velocity
-    for (auto &kv : m_waterGrid) {
-        kv.second.oldVelocity = kv.second.currVelocity;
     }
 }
 
@@ -61,8 +63,6 @@ void System::applyExternalForces(float timeStep) {
 
         // TODO: Add vorticity confinement force
 
-
-        kv.second.oldVelocity = kv.second.currVelocity;
     }
 }
 
@@ -105,10 +105,6 @@ void System::applyViscosity(float timeStep) {
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += Vector3f{u_x, u_y, u_z};
             }
         }
-    }
-    /// Make the oldVelocity = currVelocity
-    for (auto &kv : m_waterGrid) {
-        kv.second.oldVelocity = kv.second.currVelocity;
     }
 }
 

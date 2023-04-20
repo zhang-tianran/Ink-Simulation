@@ -35,9 +35,9 @@ float System::getDivergence(int i, int j, int k){
 
 //// Get the interpolated velocity at a point in space.
 Vector3f System::getVelocity(Vector3f pos){
-    float x = getInterpolatedValue(pos[0] / CELL_DIM, pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM - 0.5f, 0);
-    float y = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM, pos[2] / CELL_DIM - 0.5f, 1);
-    float z = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM, 2);
+    float x = getInterpolatedValue(pos[0] / CELL_DIM,        pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM - 0.5f, 0);
+    float y = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM,        pos[2] / CELL_DIM - 0.5f, 1);
+    float z = getInterpolatedValue(pos[0] / CELL_DIM - 0.5f, pos[1] / CELL_DIM - 0.5f, pos[2] / CELL_DIM,        2);
     return Vector3f(x, y, z);
 }
 

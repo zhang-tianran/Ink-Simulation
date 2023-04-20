@@ -16,8 +16,8 @@ void System::init() {
 
 
 /**
- * Initializes a (WATERGRID_X x WATERGRID_Z x WATERGRID_Y) waterGrid
- *               ________________+ (WATERGRID_X+1, WATERGRID_Z+1, WATERGRID_Y+1)
+ * Initializes a (WATERGRID_X x WATERGRID_Y x WATERGRID_Z) waterGrid
+ *               ________________+ (WATERGRID_X+1, WATERGRID_Y+1, WATERGRID_Z+1)
  *             /               / |
  *           /               /   | <---- (WATERGRID_Y)
  *          /--------------/     |
