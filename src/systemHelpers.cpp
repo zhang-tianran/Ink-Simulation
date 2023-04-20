@@ -2,33 +2,33 @@
 using namespace Eigen;
 using namespace std;
 
-Vector3f System::getGradient(int l, int w, int h, MatrixXf g){
-    int row_idx = grid2mat(l, w, h);
-    int val = g.row(row_idx);
+Vector3f System::getGradient(int i, int j, int k, VectorXf g){
+    int row_idx = grid2mat(i, j, k);
+    float val = g[row_idx];
     Vector3f gradient(val, val, val);
-    if (isInBoundsbyIdx(l - 1, w, h)) {
-        gradient[0] -= g.row(grid2mat(l - 1, w, h));
+    if (isInBoundsbyIdx(i - 1, j, k)) {
+        gradient[0] -= g[grid2mat(i - 1, j, k)];
     }
-    if (isInBoundsbyIdx(l, w - 1, h)) {
-        gradient[0] -= g.row(grid2mat(l, w - 1, h));
+    if (isInBoundsbyIdx(i, j - 1, k)) {
+        gradient[0] -= g[grid2mat(i, j - 1, k)];
     }
-    if (isInBoundsbyIdx(l, w, h - 1)) {
-        gradient[2] -= g.row(grid2mat(l, w, h - 1));
+    if (isInBoundsbyIdx(i, j, k - 1)) {
+        gradient[2] -= g[grid2mat(i, j, k - 1)];
     }
     return gradient;
 }
 
-float System::getDivergence(int l, int w, int h){
-    Vector3f vel = m_waterGrid[Vector3i(l, w, h)].velocity;
+float System::getDivergence(int i, int j, int k){
+    Vector3f vel = m_waterGrid[Vector3i(i, j, k)].currVelocity;
     float divergence = - vel[0] - vel[1] - vel[2];
-    if (isInBoundsbyIdx(l + 1, w, h)) {
-        divergence += m_waterGrid[Vector3i(l + 1, w, h)].velocity[0];
+    if (isInBoundsbyIdx(i + 1, j, k)) {
+        divergence += m_waterGrid[Vector3i(i + 1, j, k)].currVelocity[0];
     }
-    if (isInBoundsbyIdx(l, w + 1, h)) {
-        divergence += m_waterGrid[Vector3i(l, w + 1, h)].velocity[1];
+    if (isInBoundsbyIdx(i, j + 1, k)) {
+        divergence += m_waterGrid[Vector3i(i, j + 1, k)].currVelocity[1];
     }
-    if (isInBoundsbyIdx(l, w, h + 1)) {
-        divergence += m_waterGrid[Vector3i(l, w, h + 1)].velocity[2];
+    if (isInBoundsbyIdx(i, j, k + 1)) {
+        divergence += m_waterGrid[Vector3i(i, j, k + 1)].currVelocity[2];
     }
     return divergence;
 }
@@ -41,25 +41,25 @@ Vector3f System::getVelocity(Vector3f pos){
     return Vector3f(x, y, z);
 }
 
-std::vector<Vector3i> System::getGridNeighbors(int l, int w, int h){
+std::vector<Vector3i> System::getGridNeighbors(int i, int j, int k){
     std::vector<Vector3i> neighbors;
-    if (isInBoundsbyIdx(l + 1, w, h)) {
-        neighbors.push_back(Vector3i(l + 1, w, h));
+    if (isInBoundsbyIdx(i + 1, j, k)) {
+        neighbors.push_back(Vector3i(i + 1, j, k));
     } 
-    if (isInBoundsbyIdx(l - 1, w, h)) {
-        neighbors.push_back(Vector3i(l - 1, w, h));                    
+    if (isInBoundsbyIdx(i - 1, j, k)) {
+        neighbors.push_back(Vector3i(i - 1, j, k));
     }
-    if (isInBoundsbyIdx(l, w + 1, h)) {
-        neighbors.push_back(Vector3i(l, w + 1, h));
+    if (isInBoundsbyIdx(i, j + 1, k)) {
+        neighbors.push_back(Vector3i(i, j + 1, k));
     }
-    if (isInBoundsbyIdx(l, w - 1, h)) {
-        neighbors.push_back(Vector3i(l, w - 1, h));   
+    if (isInBoundsbyIdx(i, j - 1, k)) {
+        neighbors.push_back(Vector3i(i, j - 1, k));
     }
-    if (isInBoundsbyIdx(l, w, h + 1)) {
-        neighbors.push_back(Vector3i(l, w, h + 1));
+    if (isInBoundsbyIdx(i, j, k + 1)) {
+        neighbors.push_back(Vector3i(i, j, k + 1));
     }
-    if (isInBoundsbyIdx(l, w, h - 1)) {
-        neighbors.push_back(Vector3i(l, w, h - 1));
+    if (isInBoundsbyIdx(i, j, k - 1)) {
+        neighbors.push_back(Vector3i(i, j, k - 1));
     }
     return neighbors;
 }
@@ -74,11 +74,11 @@ bool System::isInBounds(float x, float y, float z) {
 }
 
 //// Checks whether a cell index is within bounds of the waterGrid
-bool System::isInBoundsbyIdx(int l, int w, int h) {
-    bool xIs = (l >= 0) && (l < WATERGRID_X);
-    bool yIs = (w >= 0) && (w < WATERGRID_Y);
-    bool zIs = (h >= 0) && (h < WATERGRID_Z);
-    return xIs && yIs && zIs;
+bool System::isInBoundsbyIdx(int i, int j, int k) {
+    bool iIs = (i >= 0) && (i < WATERGRID_X);
+    bool jIs = (j >= 0) && (j < WATERGRID_Y);
+    bool kIs = (k >= 0) && (k < WATERGRID_Z);
+    return iIs && jIs && kIs;
 }
 
 //// Get an interpolated data value from the grid

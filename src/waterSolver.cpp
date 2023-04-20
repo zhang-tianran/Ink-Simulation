@@ -102,11 +102,10 @@ void System::applyViscosity(float timeStep) {
                 float u_x = laplacianOperatorOnVelocity(i, j, k, 0);
                 float u_y = laplacianOperatorOnVelocity(i, j, k, 1);
                 float u_z = laplacianOperatorOnVelocity(i, j, k, 2);
-                m_waterGrid.at(Vector3f{i, j, k}).currVelocity += Vector3f{u_x, u_y, u_z};
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += Vector3f{u_x, u_y, u_z};
             }
         }
     }
-
     /// Make the oldVelocity = currVelocity
     for (auto &kv : m_waterGrid) {
         kv.second.oldVelocity = kv.second.currVelocity;
@@ -116,12 +115,12 @@ void System::applyViscosity(float timeStep) {
 void System::initPressureA() {
     int n = WATERGRID_X * WATERGRID_Y * WATERGRID_Z;
     SpMat A(n, n);
-    A.set_zeros();
-    for (int l = 0; l < WATERGRID_X; l++) {
-        for (int w = 0; w < WATERGRID_Z; w++) {
-            for (int h = 0; h < WATERGRID_Y; h++) {
-                int row_idx = grid2mat(l, w, h);
-                std::vector<Vector3i> neighbors = getGridNeighbors(l, w, h);
+    A.setZero();
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Z; j++) {
+            for (int k = 0; k < WATERGRID_Y; k++) {
+                int row_idx = grid2mat(i, j, k);
+                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
                 for (Vector3i neighbor : neighbors) {
                     A.insert(row_idx, grid2mat(neighbor[0], neighbor[1], neighbor[2]));
                 }
@@ -136,32 +135,32 @@ void System::initPressureA() {
 /// AP = B (equation 13)
 MatrixXf System::calculatePressure(float timeStep) {
     int n = WATERGRID_X * WATERGRID_Y * WATERGRID_Z;
-    MatrixXf bMatrix(n, 1);
-    for (int l = 0; l < WATERGRID_X; l++) {
-        for (int w = 0; w < WATERGRID_Z; w++) {
-            for (int h = 0; h < WATERGRID_Y; h++) {
-                int row_idx = grid2mat(l, w, h);
-                float divergence =  getDivergence(l, w, h);
-                std::vector<Vector3i> neighbors = getGridNeighbors(l, w, h);
-                int k = 6 - neighbors.size();
-                bMatrix.row(row_idx) = ((DENSITY * CELL_DIM) / timeStep) * divergence - k * ATMOSPHERIC_PRESSURE;
+    VectorXf b(n, 1);
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Z; j++) {
+            for (int k = 0; k < WATERGRID_Y; k++) {
+                int row_idx = grid2mat(i, j, k);
+                float divergence =  getDivergence(i, j, k);
+                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
+                int ki = 6 - neighbors.size();
+                b[row_idx] = ((DENSITY * CELL_DIM) / timeStep) * divergence - ki * ATMOSPHERIC_PRESSURE;
             }
         }
     }
-    MatrixXf pressure = llt.solve(bMatrix);
+    VectorXf pressure = llt.solve(b);
     return pressure;
 }
 
 /// Applies the pressure term in the Navier-Stokes equation to each cell's velocity
 void System::applyPressure(float timeStep) {
-    MatrixXf pressure = calculatePressure(timeStep);
-    for (int l = 0; l < WATERGRID_X; l++) {
-        for (int w = 0; w < WATERGRID_Z; w++) {
-            for (int h = 0; h < WATERGRID_Y; h++) {
-                int row_idx = grid2mat(l, w, h);
-                Vector3f gradient = getGradient(l, w, h, pressure);
-                m_waterGrid[Vector3i(l, w, h)].currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
-                m_waterGrid[Vector3i(l, w, h)].oldVelocity = m_waterGrid[Vector3i(l, w, h)].currVelocity;
+    VectorXf pressure = calculatePressure(timeStep);
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Z; j++) {
+            for (int k = 0; k < WATERGRID_Y; k++) {
+                int row_idx = grid2mat(i, j, k);
+                Vector3f gradient = getGradient(i, j, k, pressure);
+                m_waterGrid[Vector3i(i, j, k)].currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
+                m_waterGrid[Vector3i(i, j, k)].oldVelocity = m_waterGrid[Vector3i(i, j, k)].currVelocity;
             }
         }
     }

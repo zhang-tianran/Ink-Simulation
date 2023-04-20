@@ -34,7 +34,6 @@ void System::initWaterGrid() {
                 Cell cell {
                     .oldVelocity  = Vector3f{5, 0, 0}, // CUSTOMIZABLE
                     .currVelocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
-                    .pressure = 0
                 };
 
                 /// Insert into m_waterGrid
@@ -86,7 +85,6 @@ const std::vector<Particle>& System::getInkParticles() {
 ostream& operator<<(ostream& strm, const Cell& obj) {
     strm << "\tcurrent velocity: (" << obj.currVelocity.x() << ", ";
     strm << obj.currVelocity.y() << ", " << obj.currVelocity.z() << ")\n";
-    strm << "\tpressure: " << obj.pressure;
     return strm;
 }
 

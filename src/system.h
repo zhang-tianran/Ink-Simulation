@@ -25,7 +25,6 @@ const Eigen::Vector3f gravity = Eigen::Vector3f(0, -.98, 0);
 typedef struct Cell {
     Eigen::Vector3f oldVelocity;
     Eigen::Vector3f currVelocity;
-    float pressure;
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
@@ -75,8 +74,8 @@ private:
     void  applyViscosity(float timeStep);
     Eigen::MatrixXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
-    int grid2mat(int l, int w, int h) {
-        return l * WATERGRID_X + w * WATERGRID_Y + h;
+    int grid2mat(int i, int j, int k) {
+        return i * WATERGRID_X + j * WATERGRID_Y + k;
     };
     Eigen::SimplicialLLT<SpMat> llt;
     void initPressureA();
@@ -87,16 +86,16 @@ private:
     void updateParticles(float timeStep);
 
     /// Getters
-    Eigen::Vector3f getGradient(int l, int w, int h, Eigen::MatrixXf g);
-    float           getDivergence(int l, int w, int h);
+    Eigen::Vector3f getGradient(int i, int j, int k, Eigen::VectorXf g);
+    float           getDivergence(int i, int j, int k);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
     Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
-    std::vector<Eigen::Vector3i> getGridNeighbors(int l, int w, int h);
+    std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
     
     /// Boundary Checking: Check if a point (x, y, z) is in bounds of the water grid
     bool isInBounds(float x, float y, float z);
-    bool isInBoundsbyIdx(int x, int y, int z);
+    bool isInBoundsbyIdx(int i, int j, int k);
 
 };
 
