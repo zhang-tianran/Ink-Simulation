@@ -84,8 +84,8 @@ const std::vector<Particle>& System::getInkParticles() {
 
 /// print a cell
 ostream& operator<<(ostream& strm, const Cell& obj) {
-    strm << "\tcurrent velocity: (" << obj.curr_velocity.x() << ", ";
-    strm << obj.curr_velocity.y() << ", " << obj.curr_velocity.z() << ")\n";
+    strm << "\tcurrent velocity: (" << obj.currVelocity.x() << ", ";
+    strm << obj.currVelocity.y() << ", " << obj.currVelocity.z() << ")\n";
     strm << "\tpressure: " << obj.pressure;
     return strm;
 }
