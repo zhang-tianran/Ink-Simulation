@@ -113,8 +113,8 @@ void System::initPressureA() {
     SpMat A(n, n);
     A.setZero();
     for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Z; j++) {
-            for (int k = 0; k < WATERGRID_Y; k++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
                 for (Vector3i neighbor : neighbors) {
@@ -133,8 +133,8 @@ MatrixXf System::calculatePressure(float timeStep) {
     int n = WATERGRID_X * WATERGRID_Y * WATERGRID_Z;
     VectorXf b(n, 1);
     for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Z; j++) {
-            for (int k = 0; k < WATERGRID_Y; k++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 float divergence =  getDivergence(i, j, k);
                 std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
@@ -151,12 +151,11 @@ MatrixXf System::calculatePressure(float timeStep) {
 void System::applyPressure(float timeStep) {
     VectorXf pressure = calculatePressure(timeStep);
     for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Z; j++) {
-            for (int k = 0; k < WATERGRID_Y; k++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 Vector3f gradient = getGradient(i, j, k, pressure);
                 m_waterGrid[Vector3i(i, j, k)].currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
-                m_waterGrid[Vector3i(i, j, k)].oldVelocity = m_waterGrid[Vector3i(i, j, k)].currVelocity;
             }
         }
     }

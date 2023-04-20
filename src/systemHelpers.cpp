@@ -19,16 +19,16 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
 }
 
 float System::getDivergence(int i, int j, int k){
-    Vector3f vel = m_waterGrid[Vector3i(i, j, k)].currVelocity;
+    Vector3f vel = m_waterGrid[Vector3i(i, j, k)].oldVelocity;
     float divergence = - vel[0] - vel[1] - vel[2];
     if (isInBoundsbyIdx(i + 1, j, k)) {
-        divergence += m_waterGrid[Vector3i(i + 1, j, k)].currVelocity[0];
+        divergence += m_waterGrid[Vector3i(i + 1, j, k)].oldVelocity[0];
     }
     if (isInBoundsbyIdx(i, j + 1, k)) {
-        divergence += m_waterGrid[Vector3i(i, j + 1, k)].currVelocity[1];
+        divergence += m_waterGrid[Vector3i(i, j + 1, k)].oldVelocity[1];
     }
     if (isInBoundsbyIdx(i, j, k + 1)) {
-        divergence += m_waterGrid[Vector3i(i, j, k + 1)].currVelocity[2];
+        divergence += m_waterGrid[Vector3i(i, j, k + 1)].oldVelocity[2];
     }
     return divergence;
 }
