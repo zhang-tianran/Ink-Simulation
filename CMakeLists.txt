@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/system.h
     src/system.cpp
+    src/systemHelpers.cpp
     src/waterSolver.cpp
     src/inkSim.h
     src/inkSim.cpp

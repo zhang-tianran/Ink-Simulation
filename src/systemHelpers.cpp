@@ -91,41 +91,41 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
     
     if (isInBounds(i, j, k)) {
         weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
-        totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i, j, k)].old_velocity[idx];
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i, j, k)].oldVelocity[idx];
     }
 
     if (isInBounds(i + 1, j, k)) {
-        totalAccum  += (x - i) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j, k)].old_velocity[idx];
+        totalAccum  += (x - i) * (j + 1 - y) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j, k)].oldVelocity[idx];
         weightAccum += (x - i) * (j + 1 - y) * (k + 1 - z);
     }
 
     if (isInBounds(i, j+1, k)) {
-        totalAccum  += (i + 1 - x) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i, j + 1, k)].old_velocity[idx];
+        totalAccum  += (i + 1 - x) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i, j + 1, k)].oldVelocity[idx];
         weightAccum += (i + 1 - x) * (y - j) * (k + 1 - z);
     }
 
     if (isInBounds(i + 1, j+1, k)) {
-        totalAccum  += (x - i) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j + 1, k)].old_velocity[idx];
+        totalAccum  += (x - i) * (y - j) * (k + 1 - z) * m_waterGrid[Vector3i(i + 1, j + 1, k)].oldVelocity[idx];
         weightAccum += (x - i) * (y - j) * (k + 1 - z);
     }
 
     if (isInBounds(i, j, k+1)) {
-        totalAccum  += (i + 1 - x) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i, j, k + 1)].old_velocity[idx];
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i, j, k + 1)].oldVelocity[idx];
         weightAccum += (i + 1 - x) * (j + 1 - y) * (z - k);
     }
 
     if (isInBounds(i+1, j, k+1)) {
-        totalAccum += (x - i) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i + 1, j, k + 1)].old_velocity[idx];
+        totalAccum += (x - i) * (j + 1 - y) * (z - k) * m_waterGrid[Vector3i(i + 1, j, k + 1)].oldVelocity[idx];
         totalAccum += (x - i) * (j + 1 - y) * (z - k);
     }
     
     if (isInBounds(i, j+1, k+1)) {
-        totalAccum  += (i + 1 - x) * (y - j) * (z - k) * m_waterGrid[Vector3i(i, j + 1, k + 1)].old_velocity[idx];
+        totalAccum  += (i + 1 - x) * (y - j) * (z - k) * m_waterGrid[Vector3i(i, j + 1, k + 1)].oldVelocity[idx];
         weightAccum += (i + 1 - x) * (y - j) * (z - k);
     }
 
     if (isInBounds(i+1, j+1, k+1)) {
-        totalAccum  += (x - i) * (y - j) * (z - k) * m_waterGrid[Vector3i(i + 1, j + 1, k + 1)].old_velocity[idx];
+        totalAccum  += (x - i) * (y - j) * (z - k) * m_waterGrid[Vector3i(i + 1, j + 1, k + 1)].oldVelocity[idx];
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 

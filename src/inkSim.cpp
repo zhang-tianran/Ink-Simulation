@@ -2,7 +2,6 @@
 #include <fstream>
 
 InkSim::InkSim(std::string writeDirectory) {
-    this->ink_system = System();
     this->ink_system.init();
     this->writeDirectory = writeDirectory;
 }
