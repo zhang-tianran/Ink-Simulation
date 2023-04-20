@@ -17,9 +17,6 @@ void System::updateParticles(float timeStep){
         inkPtcl.position += timeStep * finalVel;
         inkPtcl.velocity = finalVel; // TODO: this field is never used...
 
-        Vector3f test = timeStep * finalVel;
-        cout << test[0] << ", " << test[1] << ", " << test[2] << endl;
-
         // opacity
         // lifetime
     }
