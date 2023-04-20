@@ -27,18 +27,18 @@ void System::init() {
  *           (WATERGRID_X)
  */
 void System::initWaterGrid() {
-    for (int l = 0; l < WATERGRID_X; l++) {
-        for (int w = 0; w < WATERGRID_Z; w++) {
-            for (int h = 0; h < WATERGRID_Y; h++) {
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
                 /// Create the cell
                 Cell cell {
-                    .old_velocity  = Vector3f{5, 0, 0}, // CUSTOMIZABLE
-                    .curr_velocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
+                    .oldVelocity  = Vector3f{5, 0, 0}, // CUSTOMIZABLE
+                    .currVelocity = Vector3f{5, 0, 0}, // CUSTOMIZABLE
                     .pressure = 0
                 };
 
                 /// Insert into m_waterGrid
-                m_waterGrid.insert({Vector3i{l, w, h}, cell});
+                m_waterGrid.insert({Vector3i{i, j, k}, cell});
             }
         }
     }
