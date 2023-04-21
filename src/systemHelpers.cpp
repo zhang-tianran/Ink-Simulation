@@ -8,15 +8,24 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
     Vector3f gradient(val, val, val);
     if (isInBoundsbyIdx(i - 1, j, k)) {
         gradient[0] -= g[grid2mat(i - 1, j, k)];
+    } else {
+        gradient[0] -= 1;
     }
     if (isInBoundsbyIdx(i, j - 1, k)) {
         gradient[1] -= g[grid2mat(i, j - 1, k)];
+    } else {
+        gradient[0] -= 1;
     }
     if (isInBoundsbyIdx(i, j, k - 1)) {
         gradient[2] -= g[grid2mat(i, j, k - 1)];
+    } else {
+        gradient[0] -= 1;
     }
-
-    assert(gradient.norm() < 1000);
+    if (gradient.norm() > 1000) {
+//        std::cout<<"GRADIENT" << gradient<<std::endl;
+//        std::cout<<"PRESSURE" << g<<std::endl;
+        assert(gradient.norm() < 1000);
+    }
     return gradient;
 }
 

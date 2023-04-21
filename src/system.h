@@ -8,9 +8,9 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 15; /// Water grid length
-const int WATERGRID_Y        = 15; /// Water grid height
-const int WATERGRID_Z        = 15; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
@@ -79,9 +79,10 @@ private:
     void  applyExternalForces(float timeStep);
     float laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     void  applyViscosity(float timeStep);
-    Eigen::MatrixXf calculatePressure(float timeStep);
+    Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
     int grid2mat(int i, int j, int k) {
+//        return (k * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + i;
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
     Eigen::SimplicialLLT<SpMat> llt;
