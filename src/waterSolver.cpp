@@ -31,11 +31,16 @@ void System::updateVelocityField(float timeStep) {
         assert(kv.second.oldVelocity == kv.second.currVelocity);
     }
 
+    /// debugging
+    checkNanAndInf();
+
     /// Navier-Stokes equation
     applyConvection(timeStep);
     applyExternalForces(timeStep);
     applyViscosity(timeStep);
     applyPressure(timeStep);
+
+    checkNanAndInf();
 
     /// Update each cell's old_velocity to be the curr_velocity
     for (auto &kv : m_waterGrid) {

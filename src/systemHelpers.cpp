@@ -134,3 +134,68 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
     }
     return totalAccum / weightAccum;
 }
+
+/************************* DEBUGGING UTILS *****************************/
+bool System::hasNan(Eigen::Vector3f v) {
+    return isnan(v[0]) || isnan(v[1]) || isnan(v[2]);
+}
+
+bool System::hasInf(Eigen::Vector3f v) {
+    return isinf(v[0]) || isinf(v[1]) || isinf(v[2]);
+}
+
+void System::checkNanAndInf() {
+    // check watergrid
+    for (auto& [k, v] : this->m_waterGrid) {
+        assert(!hasNan(v.oldVelocity) && !hasInf(v.oldVelocity));
+        assert(!hasNan(v.currVelocity) && !hasInf(v.currVelocity));
+    }
+
+    // check ink
+    for (auto& particle : this->m_ink) {
+        assert(!hasNan(particle.position) && !hasInf(particle.position));
+        assert(!hasNan(particle.velocity) && !hasInf(particle.position));
+    }
+}
+
+void System::checkInfs() {
+
+}
+/************************** PRINTING UTILS *****************************/
+
+/// print a cell
+ostream& operator<<(ostream& strm, const Cell& obj) {
+    strm << "\tcurrent velocity: (" << obj.currVelocity.x() << ", ";
+    strm << obj.currVelocity.y() << ", " << obj.currVelocity.z() << ")\n";
+    return strm;
+}
+
+/// print a particle
+ostream& operator<<(ostream& strm, const Particle& obj) {
+    strm << "Particle: \n";
+    strm << "\tpos: (" << obj.position.x() << ", ";
+    strm << obj.position.y() << ", " << obj.position.z() << ")\n";
+    strm << "\tvelocity: (" << obj.velocity.x() << ", ";
+    strm << obj.velocity.y() << ", " << obj.velocity.z() << ")\n";
+    strm << "\topacity: " << obj.opacity;
+    strm << "\tlifetime: " << obj.lifeTime;
+    return strm;
+}
+
+/// print the whole system
+ostream& operator<<(ostream& strm, const System& obj) {
+    strm << "********* PRINTING SYSTEM ***********\n";
+    strm << "********* PRINTING CELLS ***********\n";
+    for (auto& [k, v] : obj.m_waterGrid) {
+        strm << "Cell: \n";
+        strm << "\tpos in hashmap: (" << k.x() << ", ";
+        strm << k.x() << ", " << k.z() << ")\n";
+        strm << v << endl;
+    }
+
+    strm << "********* PRINTING PARTICLES ***********\n";
+    for (auto& el : obj.m_ink) {
+        strm << el << endl;
+    }
+    return strm;
+}

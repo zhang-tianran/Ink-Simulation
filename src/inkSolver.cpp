@@ -8,6 +8,7 @@ void System::solve(){
 }
 
 void System::updateParticles(float timeStep){
+    checkNanAndInf();
     for (Particle &inkPtcl: m_ink) {
         // midpoint velocity
         Vector3f midVel = getVelocity(inkPtcl.position);

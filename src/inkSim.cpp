@@ -3,6 +3,7 @@
 
 InkSim::InkSim(std::string writeDirectory) {
     this->ink_system.init();
+    this->ink_system.checkNanAndInf();
     this->writeDirectory = writeDirectory;
 }
 

@@ -8,16 +8,16 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 4; /// Water grid length
-const int WATERGRID_Y        = 4; /// Water grid height
-const int WATERGRID_Z        = 4; /// Water grid width
+const int WATERGRID_X        = 10; /// Water grid length
+const int WATERGRID_Y        = 10; /// Water grid height
+const int WATERGRID_Z        = 10; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 1; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 300; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
@@ -61,6 +61,9 @@ public:
     void solve();
     const std::vector<Particle>& getInkParticles();
 
+    // check if particles or watergrid values for pos/vel have inf or nans
+    void checkNanAndInf();
+
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const System& obj);
 private:
@@ -101,6 +104,11 @@ private:
     bool isInBounds(float x, float y, float z);
     bool isInBoundsbyIdx(int i, int j, int k);
 
+    /// DEBUGGING
+   bool hasNan(Eigen::Vector3f v);
+   bool hasInf(Eigen::Vector3f v);
+
+   void checkInfs();
 };
 
 
