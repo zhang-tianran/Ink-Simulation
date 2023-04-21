@@ -147,6 +147,8 @@ bool System::hasInf(Eigen::Vector3f v) {
 void System::checkNanAndInf() {
     // check watergrid
     for (auto& [k, v] : this->m_waterGrid) {
+        auto k1 = k;
+        auto v1 = v;
         assert(!hasNan(v.oldVelocity) && !hasInf(v.oldVelocity));
         assert(!hasNan(v.currVelocity) && !hasInf(v.currVelocity));
     }

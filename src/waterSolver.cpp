@@ -20,6 +20,7 @@ float System::calcTimeStep() {
     } else {
         float timeStep = K_CFL * (CELL_DIM / maxVelocity);;
         timeStep = std::max(std::min(timeStep, MAX_TIMESTEP), MIN_TIMESTEP);
+        assert(timeStep <= MAX_TIMESTEP && timeStep >= MIN_TIMESTEP);
         return timeStep;
     }
 }
@@ -36,8 +37,11 @@ void System::updateVelocityField(float timeStep) {
 
     /// Navier-Stokes equation
     applyConvection(timeStep);
+    checkNanAndInf();
     applyExternalForces(timeStep);
+    checkNanAndInf();
     applyViscosity(timeStep);
+    checkNanAndInf();
     applyPressure(timeStep);
 
     checkNanAndInf();
