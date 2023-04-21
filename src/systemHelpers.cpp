@@ -10,11 +10,13 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
         gradient[0] -= g[grid2mat(i - 1, j, k)];
     }
     if (isInBoundsbyIdx(i, j - 1, k)) {
-        gradient[0] -= g[grid2mat(i, j - 1, k)];
+        gradient[1] -= g[grid2mat(i, j - 1, k)];
     }
     if (isInBoundsbyIdx(i, j, k - 1)) {
         gradient[2] -= g[grid2mat(i, j, k - 1)];
     }
+
+    assert(gradient.norm() < 1000);
     return gradient;
 }
 
@@ -151,12 +153,15 @@ void System::checkNanAndInf() {
         auto v1 = v;
         assert(!hasNan(v.oldVelocity) && !hasInf(v.oldVelocity));
         assert(!hasNan(v.currVelocity) && !hasInf(v.currVelocity));
+        assert(v.oldVelocity.norm() < 10000);
+        assert(v.currVelocity.norm() < 10000);
     }
 
     // check ink
     for (auto& particle : this->m_ink) {
         assert(!hasNan(particle.position) && !hasInf(particle.position));
         assert(!hasNan(particle.velocity) && !hasInf(particle.position));
+        assert(particle.velocity.norm() < 10000);
     }
 }
 

@@ -82,7 +82,7 @@ private:
     Eigen::MatrixXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
     int grid2mat(int i, int j, int k) {
-        return (k * WATERGRID_X * WATERGRID_Y) + (j * WATERGRID_X) + i;
+        return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
     Eigen::SimplicialLLT<SpMat> llt;
     void initPressureA();

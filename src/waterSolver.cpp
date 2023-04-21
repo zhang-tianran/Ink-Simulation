@@ -1,4 +1,5 @@
 #include "system.h"
+#include <math.h>
 
 using namespace Eigen;
 
@@ -12,14 +13,27 @@ float System::calcTimeStep() {
     float maxVelocity = 0;
     for (auto kv : m_waterGrid) {
         if (maxVelocity < kv.second.oldVelocity.norm()) {
+
             maxVelocity = kv.second.oldVelocity.norm();
         }
     }
+
+
+//    std::cout << "start" << std::endl;
+//    std::cout << maxVelocity << std::endl;
+
+    if (isinf(maxVelocity))
+        return MIN_TIMESTEP;
+
     if (maxVelocity == 0) {
         return MIN_TIMESTEP;
     } else {
-        float timeStep = K_CFL * (CELL_DIM / maxVelocity);;
+
+        float timeStep = K_CFL * (CELL_DIM / maxVelocity);
+
         timeStep = std::max(std::min(timeStep, MAX_TIMESTEP), MIN_TIMESTEP);
+        std::cout << timeStep << std::endl;
+
         assert(timeStep <= MAX_TIMESTEP && timeStep >= MIN_TIMESTEP);
         return timeStep;
     }
@@ -38,12 +52,14 @@ void System::updateVelocityField(float timeStep) {
     /// Navier-Stokes equation
     applyConvection(timeStep);
     checkNanAndInf();
+
     applyExternalForces(timeStep);
     checkNanAndInf();
+
     applyViscosity(timeStep);
     checkNanAndInf();
-    applyPressure(timeStep);
 
+    applyPressure(timeStep);
     checkNanAndInf();
 
     /// Update each cell's old_velocity to be the curr_velocity
@@ -152,6 +168,7 @@ void System::initPressureA() {
         }
     }
     llt.compute(A);
+    float asdasd = 0;
 }
 
 /// AP = B (equation 13)
@@ -181,7 +198,8 @@ void System::applyPressure(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 Vector3f gradient = getGradient(i, j, k, pressure);
-                m_waterGrid.at(Vector3i(i, j, k)).currVelocity -= (timeStep / DENSITY * CELL_DIM) * gradient;
+                assert(gradient.norm() < 10000);
+                m_waterGrid.at(Vector3i(i, j, k)).currVelocity -= (timeStep / (DENSITY * CELL_DIM)) * gradient;
             }
         }
     }
