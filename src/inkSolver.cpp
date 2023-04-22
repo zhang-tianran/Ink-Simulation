@@ -9,7 +9,6 @@ void System::solve(){
 
 void System::updateParticles(float timeStep){
     checkNanAndInf();
-    int i = 0;
     for (Particle &inkPtcl: m_ink) {
 //        // midpoint velocity
 //        Vector3f midVel = getVelocity(inkPtcl.position);
@@ -23,10 +22,10 @@ void System::updateParticles(float timeStep){
         Vector3f midParticlePos = inkPtcl.position + (inkPtcl.velocity * timeStep * .5);
         // get midpoint particle pos from velocity field
         Vector3f midParticleVel = DENSITY * getVelocity(midParticlePos);
-        // equation 8
-        inkPtcl.position = midParticlePos + (timeStep * midParticleVel);
         // equation 9
         inkPtcl.velocity = DENSITY * getVelocity(inkPtcl.position);
+        // equation 8
+        inkPtcl.position = midParticlePos + (timeStep * midParticleVel);
 
         // opacity
         // lifetime
