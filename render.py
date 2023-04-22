@@ -16,8 +16,13 @@ renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Ou
 materialName = "Material"  # Material name for the imported object. The Material already needs to be created.
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
+
 # Constants.
 M_PI = 3.1415926535897932
+
+# define render engine
+bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
+bpy.context.scene.render.engine = 'CYCLES'
 
 # Helper.
 def Deg2Rad(degree):
