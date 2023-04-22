@@ -33,7 +33,7 @@ def SelectOnlyGivenObject(object):
 	for iterationObject in bpy.context.scene.objects:
 		iterationObject.select_set(False)
 	# Then select the given object.
-	object.select = True
+	object.select_set(True)
 
 # Delete an object, see: http://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
 def DeleteObject(object):
@@ -57,25 +57,21 @@ def create_camera(location: Tuple[float, float, float]) -> bpy.types.Object:
     bpy.ops.object.camera_add(location=location)
     return bpy.context.object
 
-def set_camera_params(camera: bpy.types.Camera,
-                      focus_target_object: bpy.types.Object,
-                      lens: float = 85.0,
-                      fstop: float = 1.4) -> None:
-    # Simulate Sony's FE 85mm F1.4 GM
-    camera.sensor_fit = 'HORIZONTAL'
-    camera.sensor_width = 36.0
-    camera.sensor_height = 24.0
-    camera.lens = lens
-    camera.dof.use_dof = True
-    camera.dof.focus_object = focus_target_object
-    camera.dof.aperture_fstop = fstop
-    camera.dof.aperture_blades = 11
-    
-def add_track_to_constraint(camera_object: bpy.types.Object, track_to_target_object: bpy.types.Object) -> None:
-    constraint = camera_object.constraints.new(type='TRACK_TO')
-    constraint.target = track_to_target_object
-    constraint.track_axis = 'TRACK_NEGATIVE_Z'
-    constraint.up_axis = 'UP_Y'
+def create_light(location):
+	# Create light datablock
+	light_data = bpy.data.lights.new(name="pointlight-data", type='POINT')
+	light_data.energy = 100
+
+	# Create new object, pass the light data 
+	light_object = bpy.data.objects.new(name="my-light", object_data=light_data)
+
+	# Link object to collection in context
+	bpy.context.collection.objects.link(light_object)
+
+	# Change light position
+	light_object.location = location
+	return light_object
+
 
 def RenderSequence(startFrame = 0, endFrame = 1):
 	camera_object = create_camera(location=(0.0, 0.0, 0.0))
@@ -95,19 +91,14 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	for currentFrame in range(startFrame, endFrame):
 		# Import the object (Either obj or ply).
 		fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
-		# bpy.ops.import_scene.obj(filepath = full_path_to_file)
 		bpy.ops.import_mesh.ply(filepath = fullPathToMesh)
 
 		# Get the just imported object.
 		importedObject = bpy.context.object
-
-		# Set its orientation. We need to do this,
-		# as PreonLab meshes have another up-axis.
-		# importedObject.rotation_euler = (Deg2Rad(90), Deg2Rad(0), Deg2Rad(0))
         
-		# Get the smoke material. It has to be named that way.
+		# Get the smoke material. It has to be named that way. -> did this above in different way
 		# material = bpy.data.materials[materialName]
-        # Get material
+
 		# Set the material of the object.
 		if len(importedObject.data.materials):
 			# assign to 1st material slot
@@ -117,10 +108,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 			importedObject.data.materials.append(material)
 			
 		## Camera
-
-		# add_track_to_constraint(camera_object, importedObject)
-		# set_camera_params(camera_object.data, importedObject, lens=72, fstop=0.5)
-
+		# focus on object
 		for area in bpy.context.screen.areas:
 			if area.type == 'VIEW_3D':
 				for region in area.regions:
@@ -131,9 +119,8 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		camera_object.location[2] += 1
 		# camera_object.values().lens = 50
 
+		## Make and link geometry nodes
 		# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
-		# gnmod = importedObject.modifiers.new("My GeoNodes Modifier", "NODES")
-		# gnmod.node_group = bpy.data.node_groups['My GeoNodes Modifier']
 		# 2) Add the GeometryNodes Modifier
 		modifier = importedObject.modifiers.new("GeometryNodesNew", "NODES")
 		print(modifier.name, modifier)
@@ -171,6 +158,8 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		links.new(nodes["Group Input"].outputs["Geometry"], meshpoint.inputs["Mesh"])
 		links.new(meshpoint.outputs["Points"], nodes["Group Output"].inputs["Geometry"])
 
+		# lighting
+		light_object = create_light(camera_object.location)
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -179,7 +168,9 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 
 		# Delete the imported object again.
 		# DeleteObject(importedObject)
-	bpy.ops.object.light_add(type='SUN', location=camera_object.location)
+		DeleteObject(light_object)
+		# bpy.ops.object.light_add(type='POINT', location=camera_object.location)
+		
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 20)
+RenderSequence(startFrame = 1, endFrame = 3)
