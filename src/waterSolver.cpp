@@ -50,13 +50,13 @@ void System::updateVelocityField(float timeStep) {
     checkNanAndInf();
 
     /// Navier-Stokes equation
-//    applyConvection(timeStep);
+    applyConvection(timeStep);
     checkNanAndInf();
 
-//    applyExternalForces(timeStep);
+    applyExternalForces(timeStep);
     checkNanAndInf();
 
-//    applyViscosity(timeStep);
+    applyViscosity(timeStep);
     checkNanAndInf();
 
     applyPressure(timeStep);
@@ -170,6 +170,7 @@ void System::initPressureA() {
         }
     }
     llt.compute(A);
+    assert(llt.info() == Eigen::Success);
     float asdasd = 0;
 }
 

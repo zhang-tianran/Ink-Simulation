@@ -43,7 +43,7 @@ void System::initWaterGrid() {
     }
     float product = WATERGRID_X*WATERGRID_Z*WATERGRID_Y;
     float size = m_waterGrid.size();
-    assert(m_waterGrid.size() == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
+    assert(size == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
     initPressureA();
 }
 
@@ -58,15 +58,13 @@ Vector3f getRandPosWithinRange(float minX, float maxX,
                                float minZ, float maxZ) {
     int r = nonZeroRand();
     float x = minX + ((maxX - minX) / (r % 1000 + 1));
-    if (isinf(x) || isnan(x)) {
-        int test = r % 1000;
-        std::cout << "AHSHSH";
-    }
-    return Vector3f{
-        x,
-        minY + ((maxY - minY) / (r % 1000 + 1)),
-        minZ + ((maxZ - minZ) / (r % 1000 + 1)),
-    };
+    assert(!isinf(x) || !isnan(x));
+    float y = minY + ((maxY - minY) / (r % 1000 + 1));
+    assert(!isinf(y) || !isnan(y));
+    float z = minZ + ((maxZ - minZ) / (r % 1000 + 1));
+    assert(!isinf(z) || !isnan(z));
+
+    return Vector3f(x, y, z);
 }
 
 /// Initializes INIT_NUM_PARTICLES Particle structs
@@ -82,8 +80,6 @@ void System::initParticles() {
             .lifeTime = 5.f // CUSTOMIZABLE
         };
 
-        if (isinf(particle.position[0]))
-            std::cout << "AHHSHHS";
         /// Insert into m_ink
         m_ink.push_back(particle);
     }
