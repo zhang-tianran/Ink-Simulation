@@ -31,7 +31,7 @@ def Deg2Rad(degree):
 def SelectOnlyGivenObject(object):
 	# Firs deselect all.
 	for iterationObject in bpy.context.scene.objects:
-		iterationObject.select = False
+		iterationObject.select_set(False)
 	# Then select the given object.
 	object.select = True
 
@@ -80,6 +80,17 @@ def add_track_to_constraint(camera_object: bpy.types.Object, track_to_target_obj
 def RenderSequence(startFrame = 0, endFrame = 1):
 	camera_object = create_camera(location=(0.0, 0.0, 0.0))
 	bpy.context.scene.camera = camera_object
+
+	# make the material
+	material = bpy.data.materials.new(name="Particle Material")
+	material.use_nodes = True
+	material_output = material.node_tree.nodes.get('Material Output')
+	emission = material.node_tree.nodes.new('ShaderNodeEmission')
+	print("new shader node", emission)
+	emission.inputs['Strength'].default_value = 15.0
+	emission.inputs['Color'].default_value = (1, 0, 0, float(1.0))
+	material.node_tree.links.new(material_output.inputs[0], emission.outputs[0])
+
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
 		# Import the object (Either obj or ply).
@@ -95,7 +106,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# importedObject.rotation_euler = (Deg2Rad(90), Deg2Rad(0), Deg2Rad(0))
         
 		# Get the smoke material. It has to be named that way.
-		material = bpy.data.materials[materialName]
+		# material = bpy.data.materials[materialName]
         # Get material
 		# Set the material of the object.
 		if len(importedObject.data.materials):
@@ -171,4 +182,4 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	bpy.ops.object.light_add(type='SUN', location=camera_object.location)
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 4)
+RenderSequence(startFrame = 1, endFrame = 20)
