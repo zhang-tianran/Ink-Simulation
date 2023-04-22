@@ -47,6 +47,71 @@ float System::getDivergence(int i, int j, int k){
     return divergence;
 }
 
+Vector3f System::getCurl(int i, int j, int k){
+    Vector3f curl(0, 0, 0);
+    /// uz / y
+    curl[0] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].oldVelocity[2] : 0;
+    curl[0] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].oldVelocity[2] : 0;
+    /// uy / z
+    curl[0] -= (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[1] : 0;
+    curl[0] += (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].oldVelocity[1] : 0;
+
+    /// ux / z
+    curl[1] += (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[0] : 0;
+    curl[1] -= (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].oldVelocity[0] : 0;
+    /// uz / x
+    curl[1] -= (i+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i+1, j, k)].oldVelocity[2] : 0;
+    curl[1] += (i-1 >= 0         ) ? m_waterGrid[Vector3i(i-1, j, k)].oldVelocity[2] : 0;
+
+    /// uy / x
+    curl[2] += (i+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i+1, j, k)].oldVelocity[1] : 0;
+    curl[2] -= (i-1 >= 0         ) ? m_waterGrid[Vector3i(i-1, j, k)].oldVelocity[1] : 0;
+    /// ux / y
+    curl[2] -= (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].oldVelocity[0] : 0;
+    curl[2] += (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].oldVelocity[0] : 0;
+
+    return curl;
+}
+
+Vector3f System::getCurlGradient(int i, int j, int k){
+    Vector3f gradient(0, 0, 0);
+    gradient[0] += (i+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i+1, j, k)].curl.norm() : 0;
+    gradient[0] -= (i-1 >= 0         ) ? m_waterGrid[Vector3i(i-1, j, k)].curl.norm() : 0;
+    gradient[1] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].curl.norm() : 0;
+    gradient[1] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].curl.norm() : 0;
+    gradient[2] += (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].curl.norm() : 0;
+    gradient[2] -= (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].curl.norm() : 0;
+//    std::cout << gradient << std::endl;
+    return gradient;
+}
+
+/**
+ * Performs the Laplacian Operator on the velocity vector field.
+ *
+ * i, j, k : cell index
+ * idx     : component of the velocity vector (either 0, 1, or 2 for x, y, or z)
+ */
+float System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
+    float laplacianVelocity = 0;
+
+    /// i direction
+    laplacianVelocity += (i+1 < WATERGRID_X) ? m_waterGrid.at(Vector3i{i+1, j, k}).oldVelocity[idx] : 0;
+    laplacianVelocity += (i-1 >= 0         ) ? m_waterGrid.at(Vector3i{i-1, j, k}).oldVelocity[idx] : 0;
+
+    /// j direction
+    laplacianVelocity += (j+1 < WATERGRID_Y) ? m_waterGrid.at(Vector3i{i, j+1, k}).oldVelocity[idx] : 0;
+    laplacianVelocity += (j-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j-1, k}).oldVelocity[idx] : 0;
+
+    /// k direction
+    laplacianVelocity += (k+1 < WATERGRID_Z) ? m_waterGrid.at(Vector3i{i, j, k+1}).oldVelocity[idx] : 0;
+    laplacianVelocity += (k-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j, k-1}).oldVelocity[idx] : 0;
+
+    /// -6*currCellOldVelocity term
+    laplacianVelocity -= 6 * m_waterGrid.at(Vector3i{i, j, k}).oldVelocity[idx];
+
+    return laplacianVelocity;
+}
+
 //// Get the interpolated velocity at a point in space.
 Vector3f System::getVelocity(Vector3f pos){
     float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0);
