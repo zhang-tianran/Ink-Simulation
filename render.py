@@ -8,8 +8,11 @@ import bpy
 from typing import Tuple
 
 # Options.
-meshFolder = "output"  # Folder without ending "\\".
-renderFolder = "output"  # Output folder (without ending "\\").
+meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
+renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
+
+# meshFolder = "output"  # Folder without ending "\\".
+# renderFolder = "output"  # Output folder (without ending "\\").
 materialName = "Material"  # Material name for the imported object. The Material already needs to be created.
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
@@ -70,6 +73,8 @@ def add_track_to_constraint(camera_object: bpy.types.Object, track_to_target_obj
     constraint.up_axis = 'UP_Y'
 
 def RenderSequence(startFrame = 0, endFrame = 1):
+	camera_object = create_camera(location=(0.0, 0.0, 0.0))
+	bpy.context.scene.camera = camera_object
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
 		# Import the object (Either obj or ply).
@@ -82,7 +87,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 
 		# Set its orientation. We need to do this,
 		# as PreonLab meshes have another up-axis.
-		importedObject.rotation_euler = (Deg2Rad(90), Deg2Rad(0), Deg2Rad(0))
+		# importedObject.rotation_euler = (Deg2Rad(90), Deg2Rad(0), Deg2Rad(0))
         
 		# Get the smoke material. It has to be named that way.
 		material = bpy.data.materials[materialName]
@@ -96,10 +101,60 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 			importedObject.data.materials.append(material)
 			
 		## Camera
-		camera_object = create_camera(location=(0.0, 0.0, 0.0))
 
-		add_track_to_constraint(camera_object, importedObject)
-		set_camera_params(camera_object.data, importedObject, lens=72, fstop=0.5)
+		# add_track_to_constraint(camera_object, importedObject)
+		# set_camera_params(camera_object.data, importedObject, lens=72, fstop=0.5)
+
+		for area in bpy.context.screen.areas:
+			if area.type == 'VIEW_3D':
+				for region in area.regions:
+					if region.type == 'WINDOW':
+						override = {'area': area, 'region': region}
+						bpy.ops.view3d.camera_to_view_selected(override)
+
+		camera_object.location[2] += 1
+		# camera_object.values().lens = 50
+
+		# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
+		# gnmod = importedObject.modifiers.new("My GeoNodes Modifier", "NODES")
+		# gnmod.node_group = bpy.data.node_groups['My GeoNodes Modifier']
+		# 2) Add the GeometryNodes Modifier
+		modifier = importedObject.modifiers.new("GeometryNodesNew", "NODES")
+		print(modifier.name, modifier)
+
+		# https://blender.stackexchange.com/questions/249763/python-geometry-node-trees/249779#249779
+		def new_GeometryNodes_group():
+			''' Create a new empty node group that can be used
+				in a GeometryNodes modifier.
+			'''
+			node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
+			inNode = node_group.nodes.new('NodeGroupInput')
+			inNode.outputs.new('NodeSocketGeometry', 'Geometry')
+			outNode = node_group.nodes.new('NodeGroupOutput')
+			outNode.inputs.new('NodeSocketGeometry', 'Geometry')
+			node_group.links.new(inNode.outputs['Geometry'], outNode.inputs['Geometry'])
+			# inNode.location = Vector((-1.5*inNode.width, 0))
+			# outNode.location = Vector((1.5*outNode.width, 0))
+			return node_group
+		# In 3.2 Adding the modifier no longer automatically creates a node group.
+		# This test could be done with versioning, but this approach is more general
+		# in case a later version of Blender goes back to including a node group.
+		node_group = None
+		if importedObject.modifiers[-1].node_group:
+			node_group = importedObject.modifiers[-1].node_group    
+		else:
+			node_group = new_GeometryNodes_group()
+			importedObject.modifiers[-1].node_group = node_group
+		nodes = node_group.nodes
+		
+		meshpoint = nodes.new(type="GeometryNodeMeshToPoints")
+		meshpoint.location.x += 400
+		meshpoint.location.y -= 50
+		# connect
+		links = node_group.links
+		links.new(nodes["Group Input"].outputs["Geometry"], meshpoint.inputs["Mesh"])
+		links.new(meshpoint.outputs["Points"], nodes["Group Output"].inputs["Geometry"])
+
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -107,7 +162,8 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		bpy.ops.render.render(write_still = True) 
 
 		# Delete the imported object again.
-		#DeleteObject(importedObject)
+		# DeleteObject(importedObject)
+	bpy.ops.object.light_add(type='SUN', location=camera_object.location)
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 2)
+RenderSequence(startFrame = 1, endFrame = 4)
