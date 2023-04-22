@@ -11,16 +11,19 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
     } else {
         gradient[0] -= 1;
     }
+
     if (isInBoundsbyIdx(i, j - 1, k)) {
         gradient[1] -= g[grid2mat(i, j - 1, k)];
     } else {
-        gradient[0] -= 1;
+        gradient[1] -= 1;
     }
+
     if (isInBoundsbyIdx(i, j, k - 1)) {
         gradient[2] -= g[grid2mat(i, j, k - 1)];
     } else {
-        gradient[0] -= 1;
+        gradient[2] -= 1;
     }
+
     if (gradient.norm() > 1000) {
 //        std::cout<<"GRADIENT" << gradient<<std::endl;
 //        std::cout<<"PRESSURE" << g<<std::endl;
@@ -174,9 +177,6 @@ void System::checkNanAndInf() {
     }
 }
 
-void System::checkInfs() {
-
-}
 /************************** PRINTING UTILS *****************************/
 
 /// print a cell
