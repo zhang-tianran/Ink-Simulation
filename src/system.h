@@ -8,16 +8,16 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 10; /// Water grid length
-const int WATERGRID_Y        = 10; /// Water grid height
-const int WATERGRID_Z        = 10; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 300; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
@@ -79,10 +79,11 @@ private:
     void  applyExternalForces(float timeStep);
     float laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     void  applyViscosity(float timeStep);
-    Eigen::MatrixXf calculatePressure(float timeStep);
+    Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
     int grid2mat(int i, int j, int k) {
-        return (k * WATERGRID_X * WATERGRID_Y) + (j * WATERGRID_X) + i;
+//        return (k * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + i;
+        return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
     Eigen::SimplicialLLT<SpMat> llt;
     void initPressureA();

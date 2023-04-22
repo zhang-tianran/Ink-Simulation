@@ -8,12 +8,23 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
     Vector3f gradient(val, val, val);
     if (isInBoundsbyIdx(i - 1, j, k)) {
         gradient[0] -= g[grid2mat(i - 1, j, k)];
+    } else {
+        gradient[0] -= 1;
     }
     if (isInBoundsbyIdx(i, j - 1, k)) {
-        gradient[0] -= g[grid2mat(i, j - 1, k)];
+        gradient[1] -= g[grid2mat(i, j - 1, k)];
+    } else {
+        gradient[0] -= 1;
     }
     if (isInBoundsbyIdx(i, j, k - 1)) {
         gradient[2] -= g[grid2mat(i, j, k - 1)];
+    } else {
+        gradient[0] -= 1;
+    }
+    if (gradient.norm() > 1000) {
+//        std::cout<<"GRADIENT" << gradient<<std::endl;
+//        std::cout<<"PRESSURE" << g<<std::endl;
+        assert(gradient.norm() < 1000);
     }
     return gradient;
 }
@@ -147,14 +158,19 @@ bool System::hasInf(Eigen::Vector3f v) {
 void System::checkNanAndInf() {
     // check watergrid
     for (auto& [k, v] : this->m_waterGrid) {
+        auto k1 = k;
+        auto v1 = v;
         assert(!hasNan(v.oldVelocity) && !hasInf(v.oldVelocity));
         assert(!hasNan(v.currVelocity) && !hasInf(v.currVelocity));
+        assert(v.oldVelocity.norm() < 10000);
+        assert(v.currVelocity.norm() < 10000);
     }
 
     // check ink
     for (auto& particle : this->m_ink) {
         assert(!hasNan(particle.position) && !hasInf(particle.position));
         assert(!hasNan(particle.velocity) && !hasInf(particle.position));
+        assert(particle.velocity.norm() < 10000);
     }
 }
 

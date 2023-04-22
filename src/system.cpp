@@ -48,8 +48,8 @@ void System::initWaterGrid() {
 }
 
 int nonZeroRand() {
-    float ret = rand();
-    return (ret >= 1) ? ret : 1;
+    int ret = rand();
+    return (ret != 0) ? ret : 1;
 }
 
 /// Returns a random position within the specified ranges
@@ -57,13 +57,15 @@ Vector3f getRandPosWithinRange(float minX, float maxX,
                                float minY, float maxY,
                                float minZ, float maxZ) {
     int r = nonZeroRand();
-    float x = minX + ((maxX - minX) / (r % 1000));
-    if (isinf(x))
+    float x = minX + ((maxX - minX) / (r % 1000 + 1));
+    if (isinf(x) || isnan(x)) {
+        int test = r % 1000;
         std::cout << "AHSHSH";
+    }
     return Vector3f{
         x,
-        minY + ((maxY - minY) / (nonZeroRand() % 1000)),
-        minZ + ((maxZ - minZ) / (nonZeroRand() % 1000)),
+        minY + ((maxY - minY) / (r % 1000 + 1)),
+        minZ + ((maxZ - minZ) / (r % 1000 + 1)),
     };
 }
 
@@ -73,7 +75,8 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = Vector3f(WATERGRID_X - 1, WATERGRID_Y - 1, WATERGRID_Z - 1), //getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+//          .position = Vector3f(WATERGRID_X - 1, WATERGRID_Y - 1, WATERGRID_Z - 1), //getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
             .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE
