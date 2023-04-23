@@ -225,6 +225,7 @@ bool System::hasInf(Eigen::Vector3f v) {
 
 void System::checkNanAndInf() {
     // check watergrid
+    #pragma omp parallel for
     for (auto& [k, v] : this->m_waterGrid) {
         auto k1 = k;
         auto v1 = v;
@@ -235,6 +236,7 @@ void System::checkNanAndInf() {
     }
 
     // check ink
+    #pragma omp parallel for
     for (auto& particle : this->m_ink) {
         assert(!hasNan(particle.position) && !hasInf(particle.position));
         assert(!hasNan(particle.velocity) && !hasInf(particle.position));

@@ -63,6 +63,7 @@ void System::updateVelocityField(float timeStep) {
     checkNanAndInf();
 
     /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
     for (auto &kv : m_waterGrid) {
         kv.second.oldVelocity = kv.second.currVelocity;
     }
@@ -228,7 +229,7 @@ void System::applyPressure(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 Vector3f gradient = getGradient(i, j, k, pressure);
                 assert(gradient.norm() < 10000);
-                m_waterGrid.at(Vector3i(i, j, k)).currVelocity -= (timeStep / (DENSITY * CELL_DIM)) * gradient;
+                m_waterGrid[Vector3i(i, j, k)].currVelocity -= (timeStep / (DENSITY * CELL_DIM)) * gradient;
             }
         }
     }

@@ -9,6 +9,7 @@ void System::solve(){
 
 void System::updateParticles(float timeStep){
     checkNanAndInf();
+    #pragma omp parallel for
     for (Particle &inkPtcl: m_ink) {
         // equation 7
         Vector3f midParticlePos = inkPtcl.position + (inkPtcl.velocity * timeStep * .5);
