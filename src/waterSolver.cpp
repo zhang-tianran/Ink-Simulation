@@ -99,40 +99,39 @@ void System::applyConvection(float timeStep) {
 
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
 void System::applyExternalForces(float timeStep) {
-    for (auto &kv : m_waterGrid) {
-        /// Applies gravity
-        kv.second.currVelocity += timeStep * gravity;
-
-        // TODO: Add vorticity confinement force
-
+    updateCurl();
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                /// gravity and Vorticity confinement
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * (getVort(i, j, k) + gravity);
+            }
+        }
     }
 }
 
-/**
- * Performs the Laplacian Operator on the velocity vector field.
- *
- * i, j, k : cell index
- * idx     : component of the velocity vector (either 0, 1, or 2 for x, y, or z)
- */
-float System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
-    float laplacianVelocity = 0;
+Vector3f System::getVort(int i, int j, int k){
+    Vector3f curl = m_waterGrid[Vector3i(i, j, k)].curl;
+    if (curl == Vector3f(0, 0, 0)) {
+        return Vector3f(0, 0, 0);
+    }
+    Vector3f N = getCurlGradient(i, j, k) / curl.norm();
+    Vector3f F_vort = K_VORT * (N.cross(curl));
+//    std::cout << "curl" << curl[0] << "," << curl[1] << "," << curl[2] << std::endl;
+//    std::cout << "N" << N[0] << "," << N[1] << "," << N[2] << std::endl;
+    return F_vort;
+}
 
-    /// i direction
-    laplacianVelocity += (i+1 < WATERGRID_X) ? m_waterGrid.at(Vector3i{i+1, j, k}).oldVelocity[idx] : 0;
-    laplacianVelocity += (i-1 >= 0         ) ? m_waterGrid.at(Vector3i{i-1, j, k}).oldVelocity[idx] : 0;
-
-    /// j direction
-    laplacianVelocity += (j+1 < WATERGRID_Y) ? m_waterGrid.at(Vector3i{i, j+1, k}).oldVelocity[idx] : 0;
-    laplacianVelocity += (j-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j-1, k}).oldVelocity[idx] : 0;
-
-    /// k direction
-    laplacianVelocity += (k+1 < WATERGRID_Z) ? m_waterGrid.at(Vector3i{i, j, k+1}).oldVelocity[idx] : 0;
-    laplacianVelocity += (k-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j, k-1}).oldVelocity[idx] : 0;
-
-    /// -6*currCellOldVelocity term
-    laplacianVelocity -= 6 * m_waterGrid.at(Vector3i{i, j, k}).oldVelocity[idx];
-
-    return laplacianVelocity;
+void System::updateCurl(){
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                /// gravity
+                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
+//                std::cout << m_waterGrid[Vector3i(i, j, k)].curl << std::endl;
+            }
+        }
+    }
 }
 
 /// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity

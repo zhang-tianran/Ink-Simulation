@@ -14,6 +14,9 @@ const int WATERGRID_Z        = 15; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
+
+const float K_VORT           = 1; /// strength of vorticity
+
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
@@ -29,6 +32,8 @@ const float MAX_TIMESTEP = 1.f;
 typedef struct Cell {
     Eigen::Vector3f oldVelocity;
     Eigen::Vector3f currVelocity;
+
+    Eigen::Vector3f curl;
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
@@ -77,17 +82,17 @@ private:
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
-    float laplacianOperatorOnVelocity(int i, int j, int k, int idx);
+    Eigen::Vector3f getVort(int i, int j, int k);
+    void  updateCurl();
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
-    int grid2mat(int i, int j, int k) {
-//        return (k * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + i;
-        return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
-    };
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
+    int grid2mat(int i, int j, int k) {
+        return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
+    };
     /// Ink
     std::vector<Particle> m_ink;
     void initParticles();
@@ -96,6 +101,9 @@ private:
     /// Getters
     Eigen::Vector3f getGradient(int i, int j, int k, Eigen::VectorXf g);
     float           getDivergence(int i, int j, int k);
+    Eigen::Vector3f getCurl(int i, int j, int k);
+    Eigen::Vector3f getCurlGradient(int i, int j, int k);
+    float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
     Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);

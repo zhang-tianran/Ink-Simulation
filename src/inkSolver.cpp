@@ -21,15 +21,13 @@ void System::updateParticles(float timeStep){
         // equation 7
         Vector3f midParticlePos = inkPtcl.position + (inkPtcl.velocity * timeStep * .5);
         // get midpoint particle pos from velocity field
-        Vector3f midParticleVel = DENSITY*getVelocity(midParticlePos);
+        Vector3f midParticleVel = DENSITY * getVelocity(midParticlePos);
         // equation 9
-        inkPtcl.velocity = DENSITY*getVelocity(inkPtcl.position);
+        inkPtcl.velocity = DENSITY * getVelocity(inkPtcl.position);
         // equation 8
-        inkPtcl.position = midParticlePos + (timeStep*midParticleVel);
+        inkPtcl.position = midParticlePos + (timeStep * midParticleVel);
 
         // opacity
         // lifetime
     }
-
-    int i = 1;
 }
