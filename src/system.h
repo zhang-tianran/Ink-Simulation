@@ -84,7 +84,6 @@ private:
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
     Eigen::Vector3f getVort(int i, int j, int k);
-    void  updateCurl();
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);

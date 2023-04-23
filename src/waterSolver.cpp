@@ -42,6 +42,7 @@ float System::calcTimeStep() {
 /// See "Fluid Flow 4 the Rest of Us" Paper for more details
 void System::updateVelocityField(float timeStep) {
     /// Error Checking
+    #pragma omp parallel for
     for (auto &kv : m_waterGrid) {
         assert(kv.second.oldVelocity == kv.second.currVelocity);
     }
@@ -82,17 +83,20 @@ Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
 /// Applies the convection term in the Navier-Stokes equation to each cell's velocity
 void System::applyConvection(float timeStep) {
     /// Update each cell's curr_velocity in the waterGrid...
+    #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                Cell currCell = m_waterGrid.at(Vector3i{i, j, k});
                 Vector3f virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep);
 
                 if (!isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
                     continue;
                 }
 
-                currCell.currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+                m_waterGrid[Vector3i(i, j, k)].currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+
+                // calculate curl
+                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
             }
         }
     }
@@ -127,7 +131,7 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
 
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
 void System::applyExternalForces(float timeStep) {
-    updateCurl();
+    #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
@@ -151,28 +155,17 @@ Vector3f System::getVort(int i, int j, int k){
     return F_vort;
 }
 
-void System::updateCurl(){
-    for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Y; j++) {
-            for (int k = 0; k < WATERGRID_Z; k++) {
-                /// gravity
-                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
-//                std::cout << m_waterGrid[Vector3i(i, j, k)].curl << std::endl;
-            }
-        }
-    }
-}
-
 /// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity
 void System::applyViscosity(float timeStep) {
     /// For each cell, apply the viscosity to each cell's currVelocity
+    #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 float u_x = laplacianOperatorOnVelocity(i, j, k, 0);
                 float u_y = laplacianOperatorOnVelocity(i, j, k, 1);
                 float u_z = laplacianOperatorOnVelocity(i, j, k, 2);
-                m_waterGrid.at(Vector3i(i, j, k)).currVelocity += timeStep * VISCOSITY * Vector3f{u_x, u_y, u_z};
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * VISCOSITY * Vector3f(u_x, u_y, u_z);
             }
         }
     }
@@ -199,13 +192,13 @@ void System::initPressureA() {
     }
     llt.compute(A);
     assert(llt.info() == Eigen::Success);
-    float asdasd = 0;
 }
 
 /// AP = B (equation 13)
 VectorXf System::calculatePressure(float timeStep) {
     int n = WATERGRID_X * WATERGRID_Y * WATERGRID_Z;
     VectorXf b(n, 1);
+    #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
@@ -224,6 +217,7 @@ VectorXf System::calculatePressure(float timeStep) {
 /// Applies the pressure term in the Navier-Stokes equation to each cell's velocity
 void System::applyPressure(float timeStep) {
     VectorXf pressure = calculatePressure(timeStep);
+    #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
