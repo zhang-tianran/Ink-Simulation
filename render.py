@@ -60,7 +60,8 @@ def create_camera(location: Tuple[float, float, float]) -> bpy.types.Object:
 def create_light(location):
 	# Create light datablock
 	light_data = bpy.data.lights.new(name="pointlight-data", type='POINT')
-	light_data.energy = 100
+	light_data.energy = 10000
+	light_data.distance = 20
 
 	# Create new object, pass the light data 
 	light_object = bpy.data.objects.new(name="my-light", object_data=light_data)
@@ -86,6 +87,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	emission.inputs['Strength'].default_value = 15.0
 	emission.inputs['Color'].default_value = (1, 0, 0, float(1.0))
 	material.node_tree.links.new(material_output.inputs[0], emission.outputs[0])
+	light_created = False
 
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
@@ -109,15 +111,16 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 			
 		## Camera
 		# focus on object
-		for area in bpy.context.screen.areas:
-			if area.type == 'VIEW_3D':
-				for region in area.regions:
-					if region.type == 'WINDOW':
-						override = {'area': area, 'region': region}
-						bpy.ops.view3d.camera_to_view_selected(override)
+		# for area in bpy.context.screen.areas:
+		# 	if area.type == 'VIEW_3D':
+		# 		for region in area.regions:
+		# 			if region.type == 'WINDOW':
+		# 				override = {'area': area, 'region': region}
+		# 				bpy.ops.view3d.camera_to_view_selected(override)
 
-		camera_object.location[2] += 1
+		# camera_object.location[2] += 2
 		# camera_object.values().lens = 50
+		camera_object.location = [7,7,49]
 
 		## Make and link geometry nodes
 		# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
@@ -159,7 +162,11 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		links.new(meshpoint.outputs["Points"], nodes["Group Output"].inputs["Geometry"])
 
 		# lighting
-		light_object = create_light(camera_object.location)
+		if not light_created:
+			create_light(camera_object.location)
+			
+			light_created = True
+		#light_object = create_light(camera_object.location)
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -167,10 +174,10 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		bpy.ops.render.render(write_still = True) 
 
 		# Delete the imported object again.
-		# DeleteObject(importedObject)
-		DeleteObject(light_object)
+		DeleteObject(importedObject)
+		# DeleteObject(light_object)
 		# bpy.ops.object.light_add(type='POINT', location=camera_object.location)
 		
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 3)
+RenderSequence(startFrame = 1, endFrame = 8)

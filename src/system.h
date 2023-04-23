@@ -17,7 +17,7 @@ const float DENSITY          = 1; /// Fluid density
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 30; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
