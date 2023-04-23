@@ -56,12 +56,11 @@ int nonZeroRand() {
 Vector3f getRandPosWithinRange(float minX, float maxX,
                                float minY, float maxY,
                                float minZ, float maxZ) {
-    int r = nonZeroRand();
-    float x = minX + ((maxX - minX) / (r % 1000 + 1));
+    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
     assert(!isinf(x) || !isnan(x));
-    float y = minY + ((maxY - minY) / (r % 1000 + 1));
+    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
     assert(!isinf(y) || !isnan(y));
-    float z = minZ + ((maxZ - minZ) / (r % 1000 + 1));
+    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
     assert(!isinf(z) || !isnan(z));
 
     return Vector3f(x, y, z);
@@ -73,8 +72,7 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
-//          .position = Vector3f(WATERGRID_X - 1, WATERGRID_Y - 1, WATERGRID_Z - 1), //getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.001, WATERGRID_Y - 0.001, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
             .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE

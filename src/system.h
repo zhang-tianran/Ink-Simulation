@@ -8,9 +8,9 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 15; /// Water grid length
-const int WATERGRID_Y        = 15; /// Water grid height
-const int WATERGRID_Z        = 15; /// Water grid width
+const int WATERGRID_X        = 14; /// Water grid length
+const int WATERGRID_Y        = 14; /// Water grid height
+const int WATERGRID_Z        = 14; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
@@ -20,11 +20,12 @@ const float K_VORT           = 1; /// strength of vorticity
 const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 30; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 20000; /// Starting number of particles
 
+//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
-const float K_CFL = 2;
+const float K_CFL = 0.2f;
 const float MIN_TIMESTEP = 0.01f;
 const float MAX_TIMESTEP = 1.f;
 // ==============================================
@@ -90,9 +91,12 @@ private:
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
+    Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);
+
     int grid2mat(int i, int j, int k) {
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
+
     /// Ink
     std::vector<Particle> m_ink;
     void initParticles();

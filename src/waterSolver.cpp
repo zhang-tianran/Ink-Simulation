@@ -97,14 +97,42 @@ void System::applyConvection(float timeStep) {
     }
 }
 
+/// returns a random float [-1, 1]
+float zeroOneNoise() {
+    float noise = (rand() % 10) / 10.f;
+    if (noise > 0.5f) { noise *= -1.f; }
+    return noise;
+}
+
+Vector3f System::applyWhirlPoolForce(Vector3i index) {
+    // Calculate center (independent of y pos)
+    Vector3f center(WATERGRID_X/2.F, 0, WATERGRID_Z/2.F);
+
+    // Get unit vector from center axis to index
+    Vector3f v(index.x()-center.x(), 0, index.z()-center.z());
+    v.normalize();
+
+    // Get perpendicular
+    Vector3f whirl = Vector3f(0, 1.f, 0).cross(v);
+
+    // Add some noise
+    whirl[0] += zeroOneNoise() * 0.1;
+    whirl[1] += zeroOneNoise();
+    whirl[2] += zeroOneNoise() * 0.1;
+
+    // Return the cross product
+    return whirl * 0.4f;
+}
+
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
 void System::applyExternalForces(float timeStep) {
     updateCurl();
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                /// gravity and Vorticity confinement
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * (getVort(i, j, k) + gravity);
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
             }
         }
     }

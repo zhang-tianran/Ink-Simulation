@@ -8,8 +8,8 @@ import bpy
 from typing import Tuple
 
 # Options.
-meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
-renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
+meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
+renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
 
 # meshFolder = "output"  # Folder without ending "\\".
 # renderFolder = "output"  # Output folder (without ending "\\").
@@ -22,7 +22,8 @@ M_PI = 3.1415926535897932
 
 # define render engine
 bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
-bpy.context.scene.render.engine = 'CYCLES'
+#bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+#bpy.context.scene.eevee.use_motion_blur = True
 
 # Helper.
 def Deg2Rad(degree):
@@ -51,7 +52,7 @@ def MeshPath(folder = "", frame = 0, fileEnding = "ply"):
 	return folder + "/" + str(frame).zfill(AmountOfNumbers) + "." + fileEnding
 
 def RenderPath(folder = "", frame = 0, fileEnding = "png"):
-	return folder + "/" + str(frame).zfill(AmountOfNumbers) + "." + fileEnding
+	return folder + "/" + str(frame).zfill(4) + "." + fileEnding
 
 def create_camera(location: Tuple[float, float, float]) -> bpy.types.Object:
     bpy.ops.object.camera_add(location=location)
@@ -180,4 +181,4 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 8)
+RenderSequence(startFrame = 1, endFrame = 200)
