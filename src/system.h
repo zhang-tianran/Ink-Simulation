@@ -17,7 +17,7 @@ const float DENSITY          = 1; /// Fluid density
 
 const float K_VORT           = 1; /// strength of vorticity
 
-const float VISCOSITY        = 1.0016; /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
 const int INIT_NUM_PARTICLES = 20000; /// Starting number of particles

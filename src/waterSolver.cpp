@@ -13,7 +13,6 @@ float System::calcTimeStep() {
     float maxVelocity = 0;
     for (auto kv : m_waterGrid) {
         if (maxVelocity < kv.second.oldVelocity.norm()) {
-
             maxVelocity = kv.second.oldVelocity.norm();
         }
     }

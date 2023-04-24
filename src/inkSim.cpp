@@ -1,5 +1,6 @@
 #include "inkSim.h"
 #include <fstream>
+#include <chrono>
 
 InkSim::InkSim(std::string writeDirectory) {
     this->ink_system.init();
@@ -8,6 +9,11 @@ InkSim::InkSim(std::string writeDirectory) {
 }
 
 void InkSim::simulate(int numTimesteps, int totalTimesteps) {
+    /// For recording time
+    auto startTS = std::chrono::system_clock::now();
+    auto startTime = std::chrono::system_clock::to_time_t(startTS);
+    std::cout << "\e[32mSimulation started at: \e[m" << std::ctime(&startTime) << std::endl;
+
     int timestepCounter = 1;
     while (timestepCounter <= totalTimesteps) {
         this->ink_system.solve();
@@ -17,6 +23,11 @@ void InkSim::simulate(int numTimesteps, int totalTimesteps) {
         timestepCounter += 1;
     }
 
+    /// For recording time
+    auto endTS = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = endTS-startTS;
+    int seconds = elapsed_seconds.count();
+    std::cout << "\e[32mSimulation & Writing took " << seconds / 60 << " min " << seconds % 60 << " sec\e[m" << std::endl;
 }
 
 
