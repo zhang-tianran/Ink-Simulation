@@ -8,11 +8,11 @@ import bpy
 from typing import Tuple
 
 # Options.
-meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
-renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
+# meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
+# renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
 
-# meshFolder = "output"  # Folder without ending "\\".
-# renderFolder = "output"  # Output folder (without ending "\\").
+meshFolder = "output"  # Folder without ending "\\".
+renderFolder = "output"  # Output folder (without ending "\\").
 materialName = "Material"  # Material name for the imported object. The Material already needs to be created.
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 

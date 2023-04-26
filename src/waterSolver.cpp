@@ -150,16 +150,16 @@ void System::applyExternalForces(float timeStep) {
         Particle currParticle = m_ink[i];
         Vector3i centerCellIndices = getCellIndexFromPoint(currParticle.position);
         Cell centerCell = m_waterGrid[centerCellIndices];
+        if (centerCell.forceApplied == false) {
+            updateForce(centerCellIndices, timeStep);
+            cellsForcesApplied.push_back(centerCellIndices);
+        }
         std::vector<Vector3i> neighbors = centerCell.neighbors;
         for (int j = 0; j < neighbors.size(); j++) {
             if (m_waterGrid[neighbors[j]].forceApplied == false) {
-                continue;
+                updateForce(neighbors[j], timeStep);
+                cellsForcesApplied.push_back(neighbors[j]);
             }
-            m_waterGrid[neighbors[j]].currVelocity += timeStep * gravity; /// Apply gravity
-            m_waterGrid[neighbors[j]].currVelocity += timeStep * applyWhirlPoolForce(neighbors[j]); /// Apply whirlpool force
-            m_waterGrid[neighbors[j]].currVelocity += timeStep * getVort(neighbors[j]); /// Apply vorticity confinement
-            m_waterGrid[neighbors[j]].forceApplied = true;
-            cellsForcesApplied.push_back(neighbors[j]);
         }
     }
 
@@ -167,6 +167,13 @@ void System::applyExternalForces(float timeStep) {
     for (Vector3i cellIdx: cellsForcesApplied) {
         m_waterGrid[cellIdx].forceApplied = false;
     }
+}
+
+void System::updateForce(Vector3i idx, float timeStep){
+    m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
+    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
+    m_waterGrid[idx].currVelocity += timeStep * getVort(idx); /// Apply vorticity confinement
+    m_waterGrid[idx].forceApplied = true;
 }
 
 Vector3f System::getVort(Vector3i idx){
@@ -230,7 +237,6 @@ VectorXf System::calculatePressure(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 float divergence =  getDivergence(i, j, k);
-                std::vector<Vector3i> neighbors = m_waterGrid[Vector3i(i, j, k)].neighbors;
                 int ki = 6 - m_waterGrid[Vector3i(i, j, k)].neighbors.size();
                 b[row_idx] = ((DENSITY * CELL_DIM) / timeStep) * divergence - ki * ATMOSPHERIC_PRESSURE;
             }

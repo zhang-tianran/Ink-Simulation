@@ -86,6 +86,7 @@ private:
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
+    void  updateForce(Eigen::Vector3i idx, float timeStep);
     Eigen::Vector3f getVort(Eigen::Vector3i idx);
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);
