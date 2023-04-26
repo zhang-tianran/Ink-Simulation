@@ -17,7 +17,6 @@ float System::calcTimeStep() {
         }
     }
 
-
 //    std::cout << "start" << std::endl;
 //    std::cout << maxVelocity << std::endl;
 
@@ -75,9 +74,6 @@ Vector3f System::traceParticle(float x, float y, float z, float t) {
     return Vector3f(x, y, z) + t*vel;
 }
 
-Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
-    return Vector3i{floor(pos.x()), floor(pos.y()), floor(pos.z())};
-}
 
 /// Applies the convection term in the Navier-Stokes equation to each cell's velocity
 void System::applyConvection(float timeStep) {
@@ -101,11 +97,19 @@ void System::applyConvection(float timeStep) {
     }
 }
 
-/// returns a random float [-1, 1]
-float zeroOneNoise() {
-    float noise = (rand() % 10) / 10.f;
-    if (noise > 0.5f) { noise *= -1.f; }
-    return noise;
+void System::applyBFECC(float timeStep) {
+    
+    // 1) apply backwards particle trace to get u*_{n+1}
+    applyConvection(-timeStep); // does the whole grid; gets stored
+    
+    // 2) find reverse of backwards particle trace from u*_{n+1} to get u*_{n}
+    applyConvection(timeStep); // does the entire grid; gets stored
+
+    // 3) estimate error using u*_{n} and u_{n} and calculate a velocity to get u-squiggle using the error
+//    calculateError(); // does the entire grid; gets stored
+    
+    // 4) starting from part 3 - do a backwards particle trace using u-squiggle
+    applyConvection(-timeStep);
 }
 
 Vector3f System::applyWhirlPoolForce(Vector3i index) {
@@ -130,24 +134,47 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
 
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
 void System::applyExternalForces(float timeStep) {
-    #pragma omp parallel for collapse(3)
-    for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Y; j++) {
-            for (int k = 0; k < WATERGRID_Z; k++) {
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
+    /*
+    Only apply external forces to the grid cells that 
+        1) Contains a particle 
+        2) Is a neighbor to a cell that has a particle
+
+    Implementation Details:
+        - Use a boolean to mark cells as either having force applied or not
+        - Go through all the particles and set its cell and its neighbors to true
+        - Go through all the true cells and apply force
+        - Reset all cells to false after applying force
+    */
+    std::vector<Vector3i> cellsForcesApplied;
+    for (int i = 0; i < m_ink.size(); i++) {
+        Particle currParticle = m_ink[i];
+        Vector3i centerCellIndices = getCellIndexFromPoint(currParticle.position);
+        Cell centerCell = m_waterGrid[centerCellIndices];
+        std::vector<Vector3i> neighbors = centerCell.neighbors;
+        for (int j = 0; j < neighbors.size(); j++) {
+            if (m_waterGrid[neighbors[j]].forceApplied == false) {
+                continue;
             }
+            m_waterGrid[neighbors[j]].currVelocity += timeStep * gravity; /// Apply gravity
+            m_waterGrid[neighbors[j]].currVelocity += timeStep * applyWhirlPoolForce(neighbors[j]); /// Apply whirlpool force
+            m_waterGrid[neighbors[j]].currVelocity += timeStep * getVort(neighbors[j]); /// Apply vorticity confinement
+            m_waterGrid[neighbors[j]].forceApplied = true;
+            cellsForcesApplied.push_back(neighbors[j]);
         }
+    }
+
+    #pragma omp parallel for
+    for (Vector3i cellIdx: cellsForcesApplied) {
+        m_waterGrid[cellIdx].forceApplied = false;
     }
 }
 
-Vector3f System::getVort(int i, int j, int k){
-    Vector3f curl = m_waterGrid[Vector3i(i, j, k)].curl;
+Vector3f System::getVort(Vector3i idx){
+    Vector3f curl = m_waterGrid[idx].curl;
     if (curl == Vector3f(0, 0, 0)) {
         return Vector3f(0, 0, 0);
     }
-    Vector3f N = getCurlGradient(i, j, k) / curl.norm();
+    Vector3f N = getCurlGradient(idx[0], idx[1], idx[2]) / curl.norm();
     Vector3f F_vort = K_VORT * (N.cross(curl));
 //    std::cout << "curl" << curl[0] << "," << curl[1] << "," << curl[2] << std::endl;
 //    std::cout << "N" << N[0] << "," << N[1] << "," << N[2] << std::endl;
@@ -179,7 +206,7 @@ void System::initPressureA() {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 assert(row_idx >= 0 && row_idx < n);
-                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
+                std::vector<Vector3i> neighbors = m_waterGrid[Vector3i(i, j, k)].neighbors;
                 assert(neighbors.size() <= 6 && neighbors.size() > 2);
                 for (Vector3i neighbor : neighbors) {
                     A.insert(row_idx, grid2mat(neighbor[0], neighbor[1], neighbor[2])) = 1;
@@ -203,8 +230,8 @@ VectorXf System::calculatePressure(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 float divergence =  getDivergence(i, j, k);
-                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
-                int ki = 6 - neighbors.size();
+                std::vector<Vector3i> neighbors = m_waterGrid[Vector3i(i, j, k)].neighbors;
+                int ki = 6 - m_waterGrid[Vector3i(i, j, k)].neighbors.size();
                 b[row_idx] = ((DENSITY * CELL_DIM) / timeStep) * divergence - ki * ATMOSPHERIC_PRESSURE;
             }
         }

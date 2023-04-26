@@ -2,6 +2,10 @@
 using namespace Eigen;
 using namespace std;
 
+Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
+    return Vector3i{floor(pos.x()), floor(pos.y()), floor(pos.z())};
+}
+
 Vector3f System::getGradient(int i, int j, int k, VectorXf g){
     int row_idx = grid2mat(i, j, k);
     float val = g[row_idx];

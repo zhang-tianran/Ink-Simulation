@@ -36,6 +36,9 @@ typedef struct Cell {
 
     Eigen::Vector3f curl;
 
+    bool forceApplied;
+    std::vector<Eigen::Vector3i> neighbors;
+
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
 } Cell;
@@ -83,18 +86,27 @@ private:
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
-    Eigen::Vector3f getVort(int i, int j, int k);
+    Eigen::Vector3f getVort(Eigen::Vector3i idx);
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
+    void applyBFECC(float timeStep); // TODO
+
     Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);
 
     int grid2mat(int i, int j, int k) {
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
+
+    /// returns a random float [-1, 1]
+    float zeroOneNoise() {
+        float noise = (rand() % 10) / 10.f;
+        if (noise > 0.5f) { noise *= -1.f; }
+        return noise;
+    }
 
     /// Ink
     std::vector<Particle> m_ink;
