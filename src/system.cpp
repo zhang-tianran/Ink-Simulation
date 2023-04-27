@@ -51,7 +51,8 @@ void System::initWaterGrid() {
 
 int nonZeroRand() {
     int ret = rand();
-    return (ret != 0) ? ret : 1;
+    return ret;
+//    return (ret != 0) ? ret : 1;
 }
 
 /// Returns a random position within the specified ranges
@@ -74,7 +75,9 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/2.f-0.2, WATERGRID_X/2.f+0.2,
+                                              WATERGRID_Y - 0.1, WATERGRID_Y - 0.1,
+                                              WATERGRID_Z/2.f-0.2, WATERGRID_Z/2.f+0.2), // CUSTOMIZABLE
             .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE

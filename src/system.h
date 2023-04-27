@@ -22,17 +22,30 @@ const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
 const int INIT_NUM_PARTICLES = 20000; /// Starting number of particles
 
-//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
+//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
 const float K_CFL = 0.2f;
 const float MIN_TIMESTEP = 0.01f;
 const float MAX_TIMESTEP = 1.f;
 // ==============================================
 
+enum CellBFECCField {
+    OLDVELOCITY,
+    USTARFORWARD,
+    USTAR,
+    USQUIGGLY,
+    CURRVELOCITY
+};
+
 typedef struct Cell {
     Eigen::Vector3f oldVelocity;
     Eigen::Vector3f currVelocity;
+
+    /// For BFECC
+    Eigen::Vector3f uStarForward;
+    Eigen::Vector3f uStar;
+    Eigen::Vector3f uSquiggly;
 
     Eigen::Vector3f curl;
 
@@ -84,7 +97,7 @@ private:
     float calcTimeStep();
     void  updateVelocityField(float timeStep);
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
-    void  applyConvection(float timeStep);
+    void  applyConvection(float timeStep, CellBFECCField field);
     void  applyExternalForces(float timeStep);
     void  updateForce(Eigen::Vector3i idx, float timeStep);
     Eigen::Vector3f getVort(Eigen::Vector3i idx);
@@ -94,20 +107,13 @@ private:
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
-    void applyBFECC(float timeStep); // TODO
+    void applyBFECC(float timeStep);
 
     Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);
 
     int grid2mat(int i, int j, int k) {
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
-
-    /// returns a random float [-1, 1]
-    float zeroOneNoise() {
-        float noise = (rand() % 10) / 10.f;
-        if (noise > 0.5f) { noise *= -1.f; }
-        return noise;
-    }
 
     /// Ink
     std::vector<Particle> m_ink;
