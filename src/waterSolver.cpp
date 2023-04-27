@@ -119,7 +119,6 @@ void System::applyConvection(float timeStep, CellBFECCField field) {
                 /// Calculate curl (just once)
                 if (field == CURRVELOCITY) {
                     m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
-                    break;
                 }
             }
         }
@@ -196,9 +195,11 @@ void System::applyExternalForces(float timeStep) {
 }
 
 void System::updateForce(Vector3i idx, float timeStep){
+
     m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
 //    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
-//    m_waterGrid[idx].currVelocity += timeStep * getVort(idx); /// Apply vorticity confinement
+    m_waterGrid[idx].currVelocity += timeStep * getVort(idx); /// Apply vorticity confinement
+    auto v = m_waterGrid[idx];
     m_waterGrid[idx].forceApplied = true;
 }
 
