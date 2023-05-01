@@ -81,6 +81,11 @@ Vector3f System::traceParticle(float x, float y, float z, float t) {
     return Vector3f(x, y, z) + t*vel;
 }
 
+Eigen::Vector3f System::traceParticle(float x, float y, float z, float t, CellBFECCField field) {
+    Vector3f vel = getVelocity(Vector3f(x, y, z), field);
+    vel = getVelocity(Vector3f(x + 0.5*t*vel.x(), y + 0.5*t*vel.y(), z + 0.5*t*vel.z()), field);
+    return Vector3f(x, y, z) + t*vel;
+}
 
 /// Applies the convection term in the Navier-Stokes equation to each cell's velocity
 void System::applyConvection(float timeStep, CellBFECCField field) {
@@ -89,8 +94,26 @@ void System::applyConvection(float timeStep, CellBFECCField field) {
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                /// Trace particle
-                Vector3f virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep);
+                /// Trace particle, fields are input b/c we want to get the previous iterations velocity (i.e. vel when we want to find USQUIGGLY will be USTAR)
+                Vector3f virtualParticlePos; //= traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, field);
+                switch(field) {
+                    case OLDVELOCITY:
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, field);
+                        break;
+                    case USTARFORWARD:
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, CURRVELOCITY);
+                        break;
+                    case USTAR:
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USTARFORWARD);
+                        break;
+                    case CURRVELOCITY:
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USQUIGGLY);
+                        break;
+                    case USQUIGGLY:
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USTAR);
+                        break;
+                }
+
                 if (!isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
                     continue;
                 }

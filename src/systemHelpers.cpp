@@ -116,11 +116,19 @@ float System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
     return laplacianVelocity;
 }
 
+
 //// Get the interpolated velocity at a point in space.
 Vector3f System::getVelocity(Vector3f pos){
     float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0);
     float y = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f, pos[1] / CELL_DIM,         (pos[2] / CELL_DIM) - 0.5f, 1);
     float z = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f,(pos[1] / CELL_DIM) - 0.5f,  pos[2] / CELL_DIM,         2);
+    return Vector3f(x, y, z);
+}
+
+Eigen::Vector3f System::getVelocity(Eigen::Vector3f pos, CellBFECCField field) {
+    float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0, field);
+    float y = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f, pos[1] / CELL_DIM,         (pos[2] / CELL_DIM) - 0.5f, 1, field);
+    float z = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f,(pos[1] / CELL_DIM) - 0.5f,  pos[2] / CELL_DIM,         2, field);
     return Vector3f(x, y, z);
 }
 
@@ -163,6 +171,24 @@ bool System::isInBoundsbyIdx(int i, int j, int k) {
     bool kIs = (k >= 0) && (k < WATERGRID_Z);
     return iIs && jIs && kIs;
 }
+
+Eigen::Vector3f System::getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field) {
+    switch (field) {
+        case OLDVELOCITY:
+            return this->m_waterGrid.at(pos).oldVelocity;
+        case USTARFORWARD:
+            return this->m_waterGrid.at(pos).uStarForward;
+        case USTAR:
+            return this->m_waterGrid.at(pos).uStar;
+        case USQUIGGLY:
+            return this->m_waterGrid.at(pos).uSquiggly;
+        case CURRVELOCITY:
+            return this->m_waterGrid.at(pos).currVelocity;
+    }
+
+    throw std::runtime_error("ERROR: CellBFECCField NOT FOUND");
+}
+
 
 //// Get an interpolated data value from the grid
 float System::getInterpolatedValue(float x, float y, float z, int idx) {
@@ -209,6 +235,60 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
 
     if (isInBounds(i+1, j+1, k+1)) {
         totalAccum  += (x - i) * (y - j) * (z - k) * m_waterGrid.at(Vector3i(i + 1, j + 1, k + 1)).oldVelocity[idx];
+        weightAccum += (x - i) * (y - j) * (z - k);
+    }
+
+    if (weightAccum == 0) {
+        return 0;
+    }
+    return totalAccum / weightAccum;
+}
+
+//// Get an interpolated data value from the grid with a givn field
+float System::getInterpolatedValue(float x, float y, float z, int idx, CellBFECCField field) {
+    int i = floor(x);
+    int j = floor(y);
+    int k = floor(z);
+    float weightAccum = 0;
+    float totalAccum = 0;
+
+    if (isInBounds(i, j, k)) {
+        weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * getVelocityFromField(Vector3i(i, j, k), field)[idx];
+    }
+
+    if (isInBounds(i + 1, j, k)) {
+        totalAccum  += (x - i) * (j + 1 - y) * (k + 1 - z) * getVelocityFromField(Vector3i(i + 1, j, k), field)[idx];
+        weightAccum += (x - i) * (j + 1 - y) * (k + 1 - z);
+    }
+
+    if (isInBounds(i, j+1, k)) {
+        totalAccum  += (i + 1 - x) * (y - j) * (k + 1 - z) * getVelocityFromField(Vector3i(i, j + 1, k), field)[idx];
+        weightAccum += (i + 1 - x) * (y - j) * (k + 1 - z);
+    }
+
+    if (isInBounds(i + 1, j+1, k)) {
+        totalAccum  += (x - i) * (y - j) * (k + 1 - z) * getVelocityFromField(Vector3i(i + 1, j + 1, k), field)[idx];
+        weightAccum += (x - i) * (y - j) * (k + 1 - z);
+    }
+
+    if (isInBounds(i, j, k+1)) {
+        totalAccum  += (i + 1 - x) * (j + 1 - y) * (z - k) * getVelocityFromField(Vector3i(i, j, k + 1), field)[idx];
+        weightAccum += (i + 1 - x) * (j + 1 - y) * (z - k);
+    }
+
+    if (isInBounds(i+1, j, k+1)) {
+        totalAccum += (x - i) * (j + 1 - y) * (z - k) * getVelocityFromField(Vector3i(i + 1, j, k + 1), field)[idx];
+        totalAccum += (x - i) * (j + 1 - y) * (z - k);
+    }
+
+    if (isInBounds(i, j+1, k+1)) {
+        totalAccum  += (i + 1 - x) * (y - j) * (z - k) * getVelocityFromField(Vector3i(i, j + 1, k + 1), field)[idx];
+        weightAccum += (i + 1 - x) * (y - j) * (z - k);
+    }
+
+    if (isInBounds(i+1, j+1, k+1)) {
+        totalAccum  += (x - i) * (y - j) * (z - k) * getVelocityFromField(Vector3i(i + 1, j + 1, k + 1), field)[idx];
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 
