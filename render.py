@@ -11,14 +11,26 @@ from typing import Tuple
 # meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
 # renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
 
-meshFolder = "output"  # Folder without ending "\\".
-renderFolder = "output"  # Output folder (without ending "\\").
+meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
+renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
+
+# meshFolder = "output"  # Folder without ending "\\".
+# renderFolder = "output"  # Output folder (without ending "\\").
 materialName = "Material"  # Material name for the imported object. The Material already needs to be created.
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
 
 # Constants.
 M_PI = 3.1415926535897932
+
+# Grid Constants
+DIMENSIONS = (14,14,14)
+GRID_THICKNESS = 0.01 # thickness of grid lines
+BORDER_THICKNESS = 0.1 # thickness of grid border
+SHOW_GRID = True # show the grid lines; otherwise, the just the grid border is shown
+
+
+
 
 # define render engine
 bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
@@ -74,6 +86,30 @@ def create_light(location):
 	light_object.location = location
 	return light_object
 
+def create_grid():
+	# create the first cube
+	bpy.ops.mesh.primitive_cube_add(enter_editmode=False, location=(0,0,0), scale=(0.5,0.5,0.5))
+	cube = bpy.context.selected_objects[0]
+
+	for i in range(3):
+		mod = cube.modifiers.new('Array_' + str(i), 'ARRAY')
+		mod.relative_offset_displace[0] = 0
+		mod.relative_offset_displace[i] = 1
+		mod.count = DIMENSIONS[i]
+
+	cube.modifiers.new('WD', 'WELD')
+	wf = cube.modifiers.new('WF', 'WIREFRAME') 
+	wf.thickness = GRID_THICKNESS
+	 # shift grid (aka. shift center of first cube after scaling)
+	cube.location = [0.5, 0.5, 0.5]
+
+def create_border():
+	grid_location = [DIMENSIONS[0]/2, DIMENSIONS[1]/2, DIMENSIONS[2]/2]
+	grid_scale = grid_location
+	bpy.ops.mesh.primitive_cube_add(enter_editmode=False, location=grid_location, scale=grid_scale)
+	cube = bpy.context.selected_objects[0]
+	wf = cube.modifiers.new('WF', 'WIREFRAME') 
+	wf.thickness = BORDER_THICKNESS
 
 def RenderSequence(startFrame = 0, endFrame = 1):
 	camera_object = create_camera(location=(0.0, 0.0, 0.0))
@@ -89,6 +125,11 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	emission.inputs['Color'].default_value = (1, 0, 0, float(1.0))
 	material.node_tree.links.new(material_output.inputs[0], emission.outputs[0])
 	light_created = False
+
+	# create grid
+	if SHOW_GRID:
+		create_grid()
+	create_border()
 
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
@@ -165,9 +206,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# lighting
 		if not light_created:
 			create_light(camera_object.location)
-			
 			light_created = True
-		#light_object = create_light(camera_object.location)
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -177,7 +216,6 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# Delete the imported object again.
 		DeleteObject(importedObject)
 		# DeleteObject(light_object)
-		# bpy.ops.object.light_add(type='POINT', location=camera_object.location)
 		
 
 # Run the script.
