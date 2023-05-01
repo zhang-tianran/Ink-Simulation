@@ -97,20 +97,19 @@ void System::applyConvection(float timeStep, CellBFECCField field) {
                 /// Trace particle, fields are input b/c we want to get the previous iterations velocity (i.e. vel when we want to find USQUIGGLY will be USTAR)
                 Vector3f virtualParticlePos; //= traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, field);
                 switch(field) {
-                    case OLDVELOCITY:
-                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, field);
+                    case OLDVELOCITY: /// Note: This case never gets called/never happens
                         break;
-                    case USTARFORWARD:
-                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, CURRVELOCITY);
+                    case USTARFORWARD: /// 1) Starting from oldVelocity, calculate uStarForward
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, OLDVELOCITY);
                         break;
-                    case USTAR:
-                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USTARFORWARD);
+                    case USTAR: /// 2) Starting from uStarForward, calculate uStar
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, USTARFORWARD);
                         break;
-                    case CURRVELOCITY:
-                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USQUIGGLY);
+                    case CURRVELOCITY: /// 4) Starting from uSquiggly, calculate currVelocity
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, USQUIGGLY);
                         break;
-                    case USQUIGGLY:
-                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep, USTAR);
+                    case USQUIGGLY: /// 3) Calculate error on the cell we are currently on (not using particle trace on this one aka not actually using virtualParticlePos here)
+                        virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, USTAR);
                         break;
                 }
 
@@ -121,21 +120,20 @@ void System::applyConvection(float timeStep, CellBFECCField field) {
                 /// Updating fields
                 Cell *cell = &m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos));
                 switch(field) {
-                    case OLDVELOCITY:
-                        m_waterGrid[Vector3i(i, j, k)].currVelocity = cell->oldVelocity;
+                    case OLDVELOCITY: /// Note: This case never gets called/never happens
                         break;
-                    case USTARFORWARD:
+                    case USTARFORWARD: /// 1) Starting from oldVelocity, calculate uStarForward
                         m_waterGrid[Vector3i(i, j, k)].uStarForward = cell->currVelocity;
                         break;
-                    case USTAR:
+                    case USTAR: /// 2) Starting from uStarForward, calculate uStar
                         m_waterGrid[Vector3i(i, j, k)].uStar        = cell->uStarForward;
                         break;
-                    case CURRVELOCITY:
+                    case CURRVELOCITY: /// 4) Starting uStar, calculate currVelocity
                         m_waterGrid[Vector3i(i, j, k)].currVelocity = cell->uSquiggly;
                         break;
-                    case USQUIGGLY:
-                        Vector3f error = (cell->uStar - cell->oldVelocity) / 2.f;
-                        m_waterGrid[Vector3i(i, j, k)].uSquiggly    = cell->oldVelocity - error;
+                    case USQUIGGLY: /// 3) Calculate error on the cell we are currently on (not using particle trace on this one)
+                        Vector3f error = (m_waterGrid[Vector3i(i, j, k)].uStar - m_waterGrid[Vector3i(i, j, k)].oldVelocity) / 2.f;
+                        m_waterGrid[Vector3i(i, j, k)].uSquiggly    = m_waterGrid[Vector3i(i, j, k)].oldVelocity - error;
                         break;
                 }
 
@@ -156,8 +154,8 @@ void System::applyBFECC(float timeStep) {
     /// 2) find reverse of backwards particle trace from u*_{n+1} to get u*_{n}
     applyConvection(timeStep, USTAR); /// backward in time update
     
-    /// 3) starting from part 3 - do a backwards particle trace for u-squiggle
-    applyConvection(-timeStep, USQUIGGLY); /// forward in time update
+    /// 3) starting from part 3 - estimate error for usquiggle
+    applyConvection(-timeStep, USQUIGGLY); /// We're not actually moving in any direction for time step
 
     /// 4) starting from part 4 - do a backwards particle trace for currVelocity
     applyConvection(-timeStep, CURRVELOCITY); /// forward in time update
