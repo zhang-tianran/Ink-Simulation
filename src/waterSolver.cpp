@@ -3,6 +3,8 @@
 
 using namespace Eigen;
 
+#define DO_BFECC false
+
 float System::updateWaterGrid() {
     float timeStep = calcTimeStep();
     updateVelocityField(timeStep);
@@ -58,10 +60,22 @@ void System::updateVelocityField(float timeStep) {
     checkNanAndInf();
 #endif
 
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
+
     applyViscosity(timeStep);
 #ifndef QT_NO_DEBUG
     checkNanAndInf();
 #endif
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
 
     applyPressure(timeStep);
 #ifndef QT_NO_DEBUG
@@ -123,7 +137,10 @@ void System::applyConvection(float timeStep, CellBFECCField field) {
                     case OLDVELOCITY: /// Note: This case never gets called/never happens
                         break;
                     case USTARFORWARD: /// 1) Starting from oldVelocity, calculate uStarForward
-                        m_waterGrid[Vector3i(i, j, k)].uStarForward = cell->currVelocity;
+                        if (DO_BFECC)
+                            m_waterGrid[Vector3i(i, j, k)].uStarForward = cell->oldVelocity;
+                        else
+                            m_waterGrid[Vector3i(i, j, k)].currVelocity = cell->oldVelocity;
                         break;
                     case USTAR: /// 2) Starting from uStarForward, calculate uStar
                         m_waterGrid[Vector3i(i, j, k)].uStar        = cell->uStarForward;
@@ -151,14 +168,17 @@ void System::applyBFECC(float timeStep) {
     /// 1) apply backwards particle trace to get u*_{n+1}
     applyConvection(-timeStep, USTARFORWARD); /// forward in time update
     
-    /// 2) find reverse of backwards particle trace from u*_{n+1} to get u*_{n}
-    applyConvection(timeStep, USTAR); /// backward in time update
-    
-    /// 3) starting from part 3 - estimate error for usquiggle
-    applyConvection(-timeStep, USQUIGGLY); /// We're not actually moving in any direction for time step
+    if (DO_BFECC) {
+        /// 2) find reverse of backwards particle trace from u*_{n+1} to get u*_{n}
+        applyConvection(timeStep, USTAR); /// backward in time update
 
-    /// 4) starting from part 4 - do a backwards particle trace for currVelocity
-    applyConvection(-timeStep, CURRVELOCITY); /// forward in time update
+        /// 3) starting from part 3 - estimate error for usquiggle
+        applyConvection(-timeStep, USQUIGGLY); /// We're not actually moving in any direction for time step
+
+        /// 4) starting from part 4 - do a backwards particle trace for currVelocity
+        applyConvection(-timeStep, CURRVELOCITY); /// forward in time update
+    }
+
 }
 
 /// returns a random float [-1, 1]

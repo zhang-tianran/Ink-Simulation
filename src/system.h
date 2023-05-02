@@ -20,7 +20,7 @@ const float K_VORT           = 1; /// strength of vorticity
 const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 5000; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
