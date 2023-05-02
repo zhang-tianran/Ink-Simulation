@@ -108,6 +108,9 @@ private:
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
+    // vorticity
+    void applyVorticity(float timestep);
+
     void applyBFECC(float timeStep);
 
     Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);

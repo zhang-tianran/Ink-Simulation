@@ -77,6 +77,15 @@ void System::updateVelocityField(float timeStep) {
         kv.second.oldVelocity = kv.second.currVelocity;
     }
 
+    applyVorticity(timeStep);
+    checkNanAndInf();
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
+
     applyPressure(timeStep);
 #ifndef QT_NO_DEBUG
     checkNanAndInf();
@@ -244,18 +253,6 @@ void System::updateForce(Vector3i idx, float timeStep){
     m_waterGrid[idx].forceApplied = true;
 }
 
-Vector3f System::getVort(Vector3i idx){
-    Vector3f curl = m_waterGrid[idx].curl;
-    if (curl == Vector3f(0, 0, 0)) {
-        return Vector3f(0, 0, 0);
-    }
-    Vector3f N = getCurlGradient(idx[0], idx[1], idx[2]) / curl.norm();
-    Vector3f F_vort = K_VORT * (N.cross(curl));
-//    std::cout << "curl" << curl[0] << "," << curl[1] << "," << curl[2] << std::endl;
-//    std::cout << "N" << N[0] << "," << N[1] << "," << N[2] << std::endl;
-    return F_vort;
-}
-
 /// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity
 void System::applyViscosity(float timeStep) {
     /// For each cell, apply the viscosity to each cell's currVelocity
@@ -270,6 +267,42 @@ void System::applyViscosity(float timeStep) {
             }
         }
     }
+}
+
+
+void System::applyVorticity(float timestep) {
+    /// For each cell, calculate the curl
+    #pragma omp parallel for collapse(3)
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
+            }
+        }
+    }
+
+    /// For each cell, apply the vorticity confinement force
+    #pragma omp parallel for collapse(3)
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timestep * getVort(Vector3i(i, j, k));
+            }
+        }
+    }
+}
+
+
+Vector3f System::getVort(Vector3i idx){
+    Vector3f curl = m_waterGrid[idx].curl;
+    if (curl == Vector3f(0, 0, 0)) {
+        return Vector3f(0, 0, 0);
+    }
+    Vector3f N = getCurlGradient(idx[0], idx[1], idx[2]) / curl.norm();
+    Vector3f F_vort = K_VORT * (N.cross(curl));
+//    std::cout << "curl" << curl[0] << "," << curl[1] << "," << curl[2] << std::endl;
+//    std::cout << "N" << N[0] << "," << N[1] << "," << N[2] << std::endl;
+    return F_vort;
 }
 
 void System::initPressureA() {
