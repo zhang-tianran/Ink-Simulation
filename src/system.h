@@ -8,9 +8,9 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 14; /// Water grid length
-const int WATERGRID_Y        = 14; /// Water grid height
-const int WATERGRID_Z        = 14; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
@@ -20,19 +20,32 @@ const float K_VORT           = 1; /// strength of vorticity
 const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 20000; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 5000; /// Starting number of particles
 
-//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
+//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
 
 const float K_CFL = 0.2f;
 const float MIN_TIMESTEP = 0.01f;
 const float MAX_TIMESTEP = 1.f;
 // ==============================================
 
+enum CellBFECCField {
+    OLDVELOCITY,
+    USTARFORWARD,
+    USTAR,
+    USQUIGGLY,
+    CURRVELOCITY
+};
+
 typedef struct Cell {
     Eigen::Vector3f oldVelocity;
     Eigen::Vector3f currVelocity;
+
+    /// For BFECC
+    Eigen::Vector3f uStarForward;
+    Eigen::Vector3f uStar;
+    Eigen::Vector3f uSquiggly;
 
     Eigen::Vector3f curl;
 
@@ -84,7 +97,8 @@ private:
     float calcTimeStep();
     void  updateVelocityField(float timeStep);
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
-    void  applyConvection(float timeStep);
+     Eigen::Vector3f traceParticle(float x, float y, float z, float t, CellBFECCField field);
+    void  applyConvection(float timeStep, CellBFECCField field);
     void  applyExternalForces(float timeStep);
     void  updateForce(Eigen::Vector3i idx, float timeStep);
     Eigen::Vector3f getVort(Eigen::Vector3i idx);
@@ -94,20 +108,16 @@ private:
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
-    void applyBFECC(float timeStep); // TODO
+    // vorticity
+    void applyVorticity(float timestep);
+
+    void applyBFECC(float timeStep);
 
     Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);
 
     int grid2mat(int i, int j, int k) {
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
     };
-
-    /// returns a random float [-1, 1]
-    float zeroOneNoise() {
-        float noise = (rand() % 10) / 10.f;
-        if (noise > 0.5f) { noise *= -1.f; }
-        return noise;
-    }
 
     /// Ink
     std::vector<Particle> m_ink;
@@ -121,9 +131,12 @@ private:
     Eigen::Vector3f getCurlGradient(int i, int j, int k);
     float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
+    Eigen::Vector3f getVelocity(Eigen::Vector3f pos, CellBFECCField field);
     Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
+    float           getInterpolatedValue(float x, float y, float z, int idx, CellBFECCField field);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
+    Eigen::Vector3f getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field);
     
     /// Boundary Checking: Check if a point (x, y, z) is in bounds of the water grid
     bool isInBounds(float x, float y, float z);

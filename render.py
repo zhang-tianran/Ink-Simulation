@@ -9,11 +9,11 @@ from typing import Tuple
 import numpy as np
 
 # Options.
-# meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
-# renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
+meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
+renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
 
-meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
-renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
+# meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
+# renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Output folder (without ending "\\").
 
 # meshFolder = "output"  # Folder without ending "\\".
 # renderFolder = "output"  # Output folder (without ending "\\").
