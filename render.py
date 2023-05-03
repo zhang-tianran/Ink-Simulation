@@ -187,6 +187,11 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		create_grid()
 	create_border()
 
+	# enable motion blur
+	bpy.context.scene.render.use_motion_blur = True
+	ink_mesh = None
+
+
 	# Loop over the frames.
 	for currentFrame in range(startFrame, endFrame):
 		# Import the object (Either obj or ply).
@@ -220,49 +225,65 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# camera_object.values().lens = 50
 		camera_object.location = [7,7,49]
 
-		## Make and link geometry nodes
-		# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
-		# 2) Add the GeometryNodes Modifier
-		modifier = importedObject.modifiers.new("GeometryNodesNew", "NODES")
-		print(modifier.name, modifier)
-
-		# https://blender.stackexchange.com/questions/249763/python-geometry-node-trees/249779#249779
-		def new_GeometryNodes_group():
-			''' Create a new empty node group that can be used
-				in a GeometryNodes modifier.
-			'''
-			node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
-			inNode = node_group.nodes.new('NodeGroupInput')
-			inNode.outputs.new('NodeSocketGeometry', 'Geometry')
-			outNode = node_group.nodes.new('NodeGroupOutput')
-			outNode.inputs.new('NodeSocketGeometry', 'Geometry')
-			node_group.links.new(inNode.outputs['Geometry'], outNode.inputs['Geometry'])
-			# inNode.location = Vector((-1.5*inNode.width, 0))
-			# outNode.location = Vector((1.5*outNode.width, 0))
-			return node_group
-		# In 3.2 Adding the modifier no longer automatically creates a node group.
-		# This test could be done with versioning, but this approach is more general
-		# in case a later version of Blender goes back to including a node group.
-		node_group = None
-		if importedObject.modifiers[-1].node_group:
-			node_group = importedObject.modifiers[-1].node_group    
+		if ink_mesh is not None:
+			print("hi")
+			print(type(ink_mesh))
+			print(type(importedObject))
+			print(importedObject.data.vertices)
+			coords = [(importedObject.matrix_world @ v.co) for v in importedObject.data.vertices]
+			for i in range(len(ink_mesh.data.vertices)):
+				ink_mesh.data.vertices[i].co = coords[i]
+			# ink_mesh.data.vertices = coords
+			DeleteObject(importedObject)
 		else:
-			node_group = new_GeometryNodes_group()
-			importedObject.modifiers[-1].node_group = node_group
-		nodes = node_group.nodes
-		
-		meshpoint = nodes.new(type="GeometryNodeMeshToPoints")
-		meshpoint.location.x += 400
-		meshpoint.location.y -= 50
-		# connect
-		links = node_group.links
-		links.new(nodes["Group Input"].outputs["Geometry"], meshpoint.inputs["Mesh"])
-		links.new(meshpoint.outputs["Points"], nodes["Group Output"].inputs["Geometry"])
+			print("YO")
+			## Make and link geometry nodes
+			# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
+			# 2) Add the GeometryNodes Modifier
+			modifier = importedObject.modifiers.new("GeometryNodesNew", "NODES")
+			print(modifier.name, modifier)
 
-		# lighting
-		if not light_created:
-			create_light(camera_object.location)
-			light_created = True
+			# https://blender.stackexchange.com/questions/249763/python-geometry-node-trees/249779#249779
+			def new_GeometryNodes_group():
+				''' Create a new empty node group that can be used
+					in a GeometryNodes modifier.
+				'''
+				node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
+				inNode = node_group.nodes.new('NodeGroupInput')
+				inNode.outputs.new('NodeSocketGeometry', 'Geometry')
+				outNode = node_group.nodes.new('NodeGroupOutput')
+				outNode.inputs.new('NodeSocketGeometry', 'Geometry')
+				node_group.links.new(inNode.outputs['Geometry'], outNode.inputs['Geometry'])
+				# inNode.location = Vector((-1.5*inNode.width, 0))
+				# outNode.location = Vector((1.5*outNode.width, 0))
+				return node_group
+			# In 3.2 Adding the modifier no longer automatically creates a node group.
+			# This test could be done with versioning, but this approach is more general
+			# in case a later version of Blender goes back to including a node group.
+			node_group = None
+			if importedObject.modifiers[-1].node_group:
+				node_group = importedObject.modifiers[-1].node_group    
+			else:
+				node_group = new_GeometryNodes_group()
+				importedObject.modifiers[-1].node_group = node_group
+			nodes = node_group.nodes
+			
+			meshpoint = nodes.new(type="GeometryNodeMeshToPoints")
+			meshpoint.location.x += 400
+			meshpoint.location.y -= 50
+			# connect
+			links = node_group.links
+			links.new(nodes["Group Input"].outputs["Geometry"], meshpoint.inputs["Mesh"])
+			links.new(meshpoint.outputs["Points"], nodes["Group Output"].inputs["Geometry"])
+
+			# lighting
+			if not light_created:
+				create_light(camera_object.location)
+				light_created = True
+			
+			ink_mesh = importedObject
+		
+		# bpy.ops.anim.keyframe_insert_menu(type='Location')
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -270,9 +291,11 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		bpy.ops.render.render(write_still = True) 
 
 		# Delete the imported object again.
-		DeleteObject(importedObject)
+		#DeleteObject(importedObject)
 		# DeleteObject(light_object)
+
+		
 		
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 200)
+RenderSequence(startFrame = 1, endFrame = 8)
