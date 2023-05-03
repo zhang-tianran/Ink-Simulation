@@ -20,7 +20,7 @@ const float K_VORT           = 1; /// strength of vorticity
 const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 5; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 5000; /// Starting number of particles
 
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
@@ -97,6 +97,7 @@ private:
     float calcTimeStep();
     void  updateVelocityField(float timeStep);
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
+     Eigen::Vector3f traceParticle(float x, float y, float z, float t, CellBFECCField field);
     void  applyConvection(float timeStep, CellBFECCField field);
     void  applyExternalForces(float timeStep);
     void  updateForce(Eigen::Vector3i idx, float timeStep);
@@ -106,6 +107,9 @@ private:
     void  applyPressure(float timeStep);
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
+
+    // vorticity
+    void applyVorticity(float timestep);
 
     void applyBFECC(float timeStep);
 
@@ -127,9 +131,12 @@ private:
     Eigen::Vector3f getCurlGradient(int i, int j, int k);
     float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
+    Eigen::Vector3f getVelocity(Eigen::Vector3f pos, CellBFECCField field);
     Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
+    float           getInterpolatedValue(float x, float y, float z, int idx, CellBFECCField field);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
+    Eigen::Vector3f getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field);
     
     /// Boundary Checking: Check if a point (x, y, z) is in bounds of the water grid
     bool isInBounds(float x, float y, float z);
