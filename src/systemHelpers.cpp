@@ -3,7 +3,7 @@ using namespace Eigen;
 using namespace std;
 
 Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
-    return Vector3i{floor(pos.x()), floor(pos.y()), floor(pos.z())};
+    return Vector3i{floor(pos.x() / CELL_DIM), floor(pos.y() / CELL_DIM), floor(pos.z() / CELL_DIM)};
 }
 
 Vector3f System::getGradient(int i, int j, int k, VectorXf g){
@@ -119,16 +119,16 @@ float System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
 
 //// Get the interpolated velocity at a point in space.
 Vector3f System::getVelocity(Vector3f pos){
-    float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0);
-    float y = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f, pos[1] / CELL_DIM,         (pos[2] / CELL_DIM) - 0.5f, 1);
-    float z = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f,(pos[1] / CELL_DIM) - 0.5f,  pos[2] / CELL_DIM,         2);
+    float x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0);
+    float y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1);
+    float z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2);
     return Vector3f(x, y, z);
 }
 
 Eigen::Vector3f System::getVelocity(Eigen::Vector3f pos, CellBFECCField field) {
-    float x = getInterpolatedValue( pos[0] / CELL_DIM,        (pos[1] / CELL_DIM) - 0.5f, (pos[2] / CELL_DIM) - 0.5f, 0, field);
-    float y = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f, pos[1] / CELL_DIM,         (pos[2] / CELL_DIM) - 0.5f, 1, field);
-    float z = getInterpolatedValue((pos[0] / CELL_DIM) - 0.5f,(pos[1] / CELL_DIM) - 0.5f,  pos[2] / CELL_DIM,         2, field);
+    float x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0, field);
+    float y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1, field);
+    float z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2, field);
     return Vector3f(x, y, z);
 }
 
@@ -334,6 +334,7 @@ void System::checkNanAndInf() {
 ostream& operator<<(ostream& strm, const Cell& obj) {
     strm << "\tcurrent velocity: (" << obj.currVelocity.x() << ", ";
     strm << obj.currVelocity.y() << ", " << obj.currVelocity.z() << ")\n";
+    strm << "\tcurl: <" << obj.curl.x() << "," << obj.curl.y() << "," << obj.curl.z() << ")\n";
     return strm;
 }
 

@@ -300,8 +300,6 @@ Vector3f System::getVort(Vector3i idx){
     }
     Vector3f N = getCurlGradient(idx[0], idx[1], idx[2]) / curl.norm();
     Vector3f F_vort = K_VORT * (N.cross(curl));
-//    std::cout << "curl" << curl[0] << "," << curl[1] << "," << curl[2] << std::endl;
-//    std::cout << "N" << N[0] << "," << N[1] << "," << N[2] << std::endl;
     return F_vort;
 }
 
