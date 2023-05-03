@@ -6,6 +6,7 @@
 # and: http://blenderartists.org/forum/showthread.php?320309-How-to-import-ply-files-from-script
 import bpy
 from typing import Tuple
+import numpy as np
 
 # Options.
 # meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
@@ -22,6 +23,8 @@ AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
 # Constants.
 M_PI = 3.1415926535897932
+END_FRAME = 20
+ANIM_STEP = 8 # amt of time between frames
 
 # Grid Constants
 DIMENSIONS = (14,14,14)
@@ -33,7 +36,8 @@ SHOW_GRID = True # show the grid lines; otherwise, the just the grid border is s
 
 
 # define render engine
-bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
+# bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
+bpy.context.scene.render.engine = 'CYCLES'
 #bpy.context.scene.render.engine = 'BLENDER_EEVEE'
 #bpy.context.scene.eevee.use_motion_blur = True
 
@@ -163,6 +167,46 @@ def clean_scene():
 # ---------- ---------- ---------- ---------- ---------- ----------
 # ---------- ---------- ---------- ---------- ---------- ----------
 
+# animation code
+# referenced: https://blender.stackexchange.com/questions/36902/how-to-keyframe-mesh-vertices-in-python
+
+# def setup_animation(ink_mesh):
+# 	action = bpy.data.actions.new("MeshAnimation")
+# 	ink_mesh.animation_data_create()
+# 	ink_mesh.animation_data.action = action
+# 	# instantiate fcurves xyz for each vertex
+# 	data_path = "vertices[%d].co"
+# 	fcurves = []
+# 	for v in ink_mesh.data.vertices:
+# 		fcurves.append([action.fcurves.new(data_path % v.index, index =  i) for i in range(3)])
+# 	return fcurves
+
+# def insert_keyframe(fcurves, frame, values):
+#     for fcu, val in zip(fcurves, values):
+#         fcu.keyframe_points.insert(frame, val, options={'FAST'})
+	
+# def keyframe_vertices(ink_mesh, frame, fcurves):
+# 	frame = frame * ANIM_STEP
+# 	for i in range(len(ink_mesh.data.vertices)):
+# 		curr_vert = ink_mesh.data.vertices[i]
+# 		vert_fcurve_xyz = fcurves[i]
+# 		insert_keyframe(vert_fcurve_xyz, frame, curr_vert.co)
+# 		# fcurves = [action.fcurves.new(data_path % v.index, index =  i) for i in range(3)]
+# 		# co_rest = v.co
+
+# 		# for t, value in zip(frames, values):
+# 		# 	co_kf = co_rest + value * vec_z
+# 		# 	insert_keyframe(fcurves, t, co_kf)
+
+
+
+
+
+
+# ---------- ---------- ---------- ---------- ---------- ----------
+# ---------- ---------- ---------- ---------- ---------- ----------
+# ---------- ---------- ---------- ---------- ---------- ----------
+
 def RenderSequence(startFrame = 0, endFrame = 1):
 	# Clear the scene:
 	clean_scene()
@@ -187,9 +231,13 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		create_grid()
 	create_border()
 
+
 	# enable motion blur
 	bpy.context.scene.render.use_motion_blur = True
+	# fcurves = None
 	ink_mesh = None
+	data = []
+	
 
 
 	# Loop over the frames.
@@ -204,13 +252,6 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# Get the smoke material. It has to be named that way. -> did this above in different way
 		# material = bpy.data.materials[materialName]
 
-		# Set the material of the object.
-		if len(importedObject.data.materials):
-			# assign to 1st material slot
-			importedObject.data.materials[0] = material
-		else:
-			# if there is no material append it
-			importedObject.data.materials.append(material)
 			
 		## Camera
 		# focus on object
@@ -226,17 +267,22 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		camera_object.location = [7,7,49]
 
 		if ink_mesh is not None:
-			print("hi")
-			print(type(ink_mesh))
-			print(type(importedObject))
-			print(importedObject.data.vertices)
-			coords = [(importedObject.matrix_world @ v.co) for v in importedObject.data.vertices]
-			for i in range(len(ink_mesh.data.vertices)):
-				ink_mesh.data.vertices[i].co = coords[i]
-			# ink_mesh.data.vertices = coords
+			ink_coords = np.array([v.co for v in importedObject.data.vertices])
+			data.append(ink_coords)
+			# coords = [(importedObject.matrix_world @ v.co) for v in importedObject.data.vertices]
+			# for i in range(len(ink_mesh.data.vertices)):
+			# 	ink_mesh.data.vertices[i].co = coords[i]
+			# # ink_mesh.data.vertices = coords
 			DeleteObject(importedObject)
 		else:
 			print("YO")
+			# Set the material of the object.
+			if len(importedObject.data.materials):
+				# assign to 1st material slot
+				importedObject.data.materials[0] = material
+			else:
+				# if there is no material append it
+				importedObject.data.materials.append(material)
 			## Make and link geometry nodes
 			# https://blender.stackexchange.com/questions/259867/geometry-nodes-as-mesh-generation-script
 			# 2) Add the GeometryNodes Modifier
@@ -282,8 +328,14 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 				light_created = True
 			
 			ink_mesh = importedObject
+			ink_coords = np.array([v.co for v in ink_mesh.data.vertices])
+			data.append(ink_coords)
+
+			# setup animation
+			# fcurves = setup_animation(ink_mesh)
 		
 		# bpy.ops.anim.keyframe_insert_menu(type='Location')
+		# keyframe_vertices(ink_mesh, currentFrame, fcurves)
 
 		# Render the scene.
 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
@@ -293,9 +345,27 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		# Delete the imported object again.
 		#DeleteObject(importedObject)
 		# DeleteObject(light_object)
+	def insert_keyframe(fcurves, frame, values):
+		for fcu, val in zip(fcurves, values):
+			fcu.keyframe_points.insert(frame, val, options={'FAST'})
+	me = ink_mesh.data
+	action = bpy.data.actions.new("MeshAnimation")
+	me.animation_data_create()
+	me.animation_data.action = action
+
+	data_path = "vertices[%d].co"
+
+	frames = list(range(startFrame, endFrame))
+
+	for index, v in enumerate(me.vertices):
+		fcurves = [action.fcurves.new(data_path % v.index, index =  i) for i in range(3)]
+		for t in frames:
+			co_kf = data[t-1][index]
+			insert_keyframe(fcurves, t, co_kf)
+
 
 		
 		
 
 # Run the script.
-RenderSequence(startFrame = 1, endFrame = 8)
+RenderSequence(startFrame = 1, endFrame = END_FRAME)
