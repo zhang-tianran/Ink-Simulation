@@ -292,9 +292,10 @@ float System::getInterpolatedValue(float x, float y, float z, int idx, CellBFECC
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 
-    if (weightAccum == 0) {
+    if (-.005 <= weightAccum && weightAccum <= 0.005) {
         return 0;
     }
+    float total = totalAccum / weightAccum;
     return totalAccum / weightAccum;
 }
 
