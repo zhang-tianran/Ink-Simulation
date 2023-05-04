@@ -5,29 +5,29 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-typedef Eigen::SparseMatrix<float> SpMat;
+typedef Eigen::SparseMatrix<double> SpMat;
 
 // ============== Global Constants ==============
 const int WATERGRID_X        = 2; /// Water grid length
 const int WATERGRID_Y        = 2; /// Water grid height
 const int WATERGRID_Z        = 2; /// Water grid width
-const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
+const double CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
-const float DENSITY          = 1; /// Fluid density
+const double DENSITY          = 1; /// Fluid density
 
-const float K_VORT           = 1; /// strength of vorticity
+const double K_VORT           = 1; /// strength of vorticity
 
-const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
-const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
+const double VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const double ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
 const int INIT_NUM_PARTICLES = 5000; /// Starting number of particles
 
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-//const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
+const Eigen::Vector3d gravity = Eigen::Vector3d(0, -0.58, 0);
+//const Eigen::Vector3d gravity = Eigen::Vector3d(0, -0.98, 0);
 
-const float K_CFL = 0.2f;
-const float MIN_TIMESTEP = 0.01f;
-const float MAX_TIMESTEP = 1.f;
+const double K_CFL = 0.2f;
+const double MIN_TIMESTEP = 0.01f;
+const double MAX_TIMESTEP = 1.f;
 // ==============================================
 
 enum CellBFECCField {
@@ -39,15 +39,15 @@ enum CellBFECCField {
 };
 
 typedef struct Cell {
-    Eigen::Vector3f oldVelocity;
-    Eigen::Vector3f currVelocity;
+    Eigen::Vector3d oldVelocity;
+    Eigen::Vector3d currVelocity;
 
     /// For BFECC
-    Eigen::Vector3f uStarForward;
-    Eigen::Vector3f uStar;
-    Eigen::Vector3f uSquiggly;
+    Eigen::Vector3d uStarForward;
+    Eigen::Vector3d uStar;
+    Eigen::Vector3d uSquiggly;
 
-    Eigen::Vector3f curl;
+    Eigen::Vector3d curl;
 
     bool forceApplied;
     std::vector<Eigen::Vector3i> neighbors;
@@ -57,10 +57,10 @@ typedef struct Cell {
 } Cell;
 
 typedef struct Particle {
-    Eigen::Vector3f position;
-    Eigen::Vector3f velocity;
-    float opacity;  /// In [0, 1]
-    float lifeTime;
+    Eigen::Vector3d position;
+    Eigen::Vector3d velocity;
+    double opacity;  /// In [0, 1]
+    double lifeTime;
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Particle& obj);
@@ -93,27 +93,27 @@ private:
     /// Water Grid
     std::unordered_map<Eigen::Vector3i, Cell, hash_func> m_waterGrid;
     void  initWaterGrid();
-    float updateWaterGrid();
-    float calcTimeStep();
-    void  updateVelocityField(float timeStep);
-    Eigen::Vector3f traceParticle(float x, float y, float z, float t);
-     Eigen::Vector3f traceParticle(float x, float y, float z, float t, CellBFECCField field);
-    void  applyConvection(float timeStep, CellBFECCField field);
-    void  applyExternalForces(float timeStep);
-    void  updateForce(Eigen::Vector3i idx, float timeStep);
-    Eigen::Vector3f getVort(Eigen::Vector3i idx);
-    void  applyViscosity(float timeStep);
-    Eigen::VectorXf calculatePressure(float timeStep);
-    void  applyPressure(float timeStep);
+    double updateWaterGrid();
+    double calcTimeStep();
+    void  updateVelocityField(double timeStep);
+    Eigen::Vector3d traceParticle(double x, double y, double z, double t);
+     Eigen::Vector3d traceParticle(double x, double y, double z, double t, CellBFECCField field);
+    void  applyConvection(double timeStep, CellBFECCField field);
+    void  applyExternalForces(double timeStep);
+    void  updateForce(Eigen::Vector3i idx, double timeStep);
+    Eigen::Vector3d getVort(Eigen::Vector3i idx);
+    void  applyViscosity(double timeStep);
+    Eigen::VectorXd calculatePressure(double timeStep);
+    void  applyPressure(double timeStep);
     Eigen::SparseLU<SpMat> llt;
     void initPressureA();
 
     // vorticity
-    void applyVorticity(float timestep);
+    void applyVorticity(double timestep);
 
-    void applyBFECC(float timeStep);
+    void applyBFECC(double timeStep);
 
-    Eigen::Vector3f applyWhirlPoolForce(Eigen::Vector3i index);
+    Eigen::Vector3d applyWhirlPoolForce(Eigen::Vector3i index);
 
     int grid2mat(int i, int j, int k) {
         return (i * WATERGRID_Z * WATERGRID_Y) + (j * WATERGRID_X) + k;
@@ -122,29 +122,29 @@ private:
     /// Ink
     std::vector<Particle> m_ink;
     void initParticles();
-    void updateParticles(float timeStep);
+    void updateParticles(double timeStep);
 
     /// Getters
-    Eigen::Vector3f getGradient(int i, int j, int k, Eigen::VectorXf g);
-    float           getDivergence(int i, int j, int k);
-    Eigen::Vector3f getCurl(int i, int j, int k);
-    Eigen::Vector3f getCurlGradient(int i, int j, int k);
-    float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
-    Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
-    Eigen::Vector3f getVelocity(Eigen::Vector3f pos, CellBFECCField field);
-    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
-    float           getInterpolatedValue(float x, float y, float z, int idx);
-    float           getInterpolatedValue(float x, float y, float z, int idx, CellBFECCField field);
+    Eigen::Vector3d getGradient(int i, int j, int k, Eigen::VectorXd g);
+    double           getDivergence(int i, int j, int k);
+    Eigen::Vector3d getCurl(int i, int j, int k);
+    Eigen::Vector3d getCurlGradient(int i, int j, int k);
+    double           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
+    Eigen::Vector3d getVelocity(Eigen::Vector3d pos);
+    Eigen::Vector3d getVelocity(Eigen::Vector3d pos, CellBFECCField field);
+    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3d &pos);
+    double           getInterpolatedValue(double x, double y, double z, int idx);
+    double           getInterpolatedValue(double x, double y, double z, int idx, CellBFECCField field);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
-    Eigen::Vector3f getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field);
+    Eigen::Vector3d getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field);
     
     /// Boundary Checking: Check if a point (x, y, z) is in bounds of the water grid
-    bool isInBounds(float x, float y, float z);
+    bool isInBounds(double x, double y, double z);
     bool isInBoundsbyIdx(int i, int j, int k);
 
     /// DEBUGGING
-   bool hasNan(Eigen::Vector3f v);
-   bool hasInf(Eigen::Vector3f v);
+   bool hasNan(Eigen::Vector3d v);
+   bool hasInf(Eigen::Vector3d v);
 };
 
 

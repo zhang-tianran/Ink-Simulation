@@ -50,7 +50,7 @@ void InkSim::writeToFile(int frameNum) {
     myfile << "end_header\n";
     // input data
     for(int i = 0; i<inkParticles.size(); i++) {
-        Eigen::Vector3f currParticle = inkParticles[i].position;
+        Eigen::Vector3d currParticle = inkParticles[i].position;
         std::string position = std::to_string(currParticle.x()) + " " + std::to_string(currParticle.y()) + " " + std::to_string(currParticle.z());
         myfile << position + "\n";
     }

@@ -2,14 +2,15 @@
 using namespace Eigen;
 using namespace std;
 
-Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
+#define EPSILON .005
+Vector3i System::getCellIndexFromPoint(Vector3d &pos) {
     return Vector3i{floor(pos.x() / CELL_DIM), floor(pos.y() / CELL_DIM), floor(pos.z() / CELL_DIM)};
 }
 
-Vector3f System::getGradient(int i, int j, int k, VectorXf g){
+Vector3d System::getGradient(int i, int j, int k, VectorXd g){
     int row_idx = grid2mat(i, j, k);
-    float val = g[row_idx];
-    Vector3f gradient(val, val, val);
+    double val = g[row_idx];
+    Vector3d gradient(val, val, val);
     if (isInBoundsbyIdx(i - 1, j, k)) {
         gradient[0] -= g[grid2mat(i - 1, j, k)];
     } else {
@@ -36,9 +37,9 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
     return gradient;
 }
 
-float System::getDivergence(int i, int j, int k){
-    Vector3f vel = m_waterGrid.at(Vector3i(i, j, k)).oldVelocity;
-    float divergence = - vel[0] - vel[1] - vel[2];
+double System::getDivergence(int i, int j, int k){
+    Vector3d vel = m_waterGrid.at(Vector3i(i, j, k)).oldVelocity;
+    double divergence = - vel[0] - vel[1] - vel[2];
     if (isInBoundsbyIdx(i + 1, j, k)) {
         divergence += m_waterGrid.at(Vector3i(i + 1, j, k)).oldVelocity[0];
     }
@@ -51,8 +52,8 @@ float System::getDivergence(int i, int j, int k){
     return divergence;
 }
 
-Vector3f System::getCurl(int i, int j, int k){
-    Vector3f curl(0, 0, 0);
+Vector3d System::getCurl(int i, int j, int k){
+    Vector3d curl(0, 0, 0);
     /// uz / y
     curl[0] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].oldVelocity[2] : 0;
     curl[0] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].oldVelocity[2] : 0;
@@ -77,8 +78,8 @@ Vector3f System::getCurl(int i, int j, int k){
     return curl;
 }
 
-Vector3f System::getCurlGradient(int i, int j, int k){
-    Vector3f gradient(0, 0, 0);
+Vector3d System::getCurlGradient(int i, int j, int k){
+    Vector3d gradient(0, 0, 0);
     gradient[0] += (i+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i+1, j, k)].curl.norm() : 0;
     gradient[0] -= (i-1 >= 0         ) ? m_waterGrid[Vector3i(i-1, j, k)].curl.norm() : 0;
     gradient[1] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].curl.norm() : 0;
@@ -89,47 +90,57 @@ Vector3f System::getCurlGradient(int i, int j, int k){
     return gradient;
 }
 
+double isZero(double f) {
+    return -EPSILON <= f && f <= EPSILON;
+}
 /**
  * Performs the Laplacian Operator on the velocity vector field.
  *
  * i, j, k : cell index
  * idx     : component of the velocity vector (either 0, 1, or 2 for x, y, or z)
  */
-float System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
-    float laplacianVelocity = 0;
+double System::laplacianOperatorOnVelocity(int i, int j, int k, int idx) {
+    double laplacianVelocity = 0;
 
     /// i direction
-    laplacianVelocity += (i+1 < WATERGRID_X) ? m_waterGrid.at(Vector3i{i+1, j, k}).oldVelocity[idx] : 0;
-    laplacianVelocity += (i-1 >= 0         ) ? m_waterGrid.at(Vector3i{i-1, j, k}).oldVelocity[idx] : 0;
+    if (i + 1 < WATERGRID_X && !isZero(m_waterGrid.at(Vector3i{i+1, j, k}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i+1, j, k}).oldVelocity[idx];
+    if (i - 1 >= 0 && !isZero(m_waterGrid.at(Vector3i{i-1, j, k}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i-1, j, k}).oldVelocity[idx];
 
     /// j direction
-    laplacianVelocity += (j+1 < WATERGRID_Y) ? m_waterGrid.at(Vector3i{i, j+1, k}).oldVelocity[idx] : 0;
-    laplacianVelocity += (j-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j-1, k}).oldVelocity[idx] : 0;
+    if (j+1 < WATERGRID_Y &&  !isZero(m_waterGrid.at(Vector3i{i, j+1, k}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i, j+1, k}).oldVelocity[idx];
+    if (j-1 >= 0 && !isZero(m_waterGrid.at(Vector3i{i, j-1, k}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i, j-1, k}).oldVelocity[idx];
 
     /// k direction
-    laplacianVelocity += (k+1 < WATERGRID_Z) ? m_waterGrid.at(Vector3i{i, j, k+1}).oldVelocity[idx] : 0;
-    laplacianVelocity += (k-1 >= 0         ) ? m_waterGrid.at(Vector3i{i, j, k-1}).oldVelocity[idx] : 0;
+    if (k+1 < WATERGRID_Z && !isZero(m_waterGrid.at(Vector3i{i, j, k+1}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i, j, k+1}).oldVelocity[idx];
+    if (k-1 >= 0 && !isZero(m_waterGrid.at(Vector3i{i, j, k-1}).oldVelocity[idx]))
+        laplacianVelocity += m_waterGrid.at(Vector3i{i, j, k-1}).oldVelocity[idx];
 
     /// -6*currCellOldVelocity term
-    laplacianVelocity -= 6 * m_waterGrid.at(Vector3i{i, j, k}).oldVelocity[idx];
+    if (!isZero(m_waterGrid.at(Vector3i{i, j, k}).oldVelocity[idx]))
+        laplacianVelocity -= 6 * m_waterGrid.at(Vector3i{i, j, k}).oldVelocity[idx];
 
     return laplacianVelocity;
 }
 
 
 //// Get the interpolated velocity at a point in space.
-Vector3f System::getVelocity(Vector3f pos){
-    float x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0);
-    float y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1);
-    float z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2);
-    return Vector3f(x, y, z);
+Vector3d System::getVelocity(Vector3d pos){
+    double x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0);
+    double y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1);
+    double z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2);
+    return Vector3d(x, y, z);
 }
 
-Eigen::Vector3f System::getVelocity(Eigen::Vector3f pos, CellBFECCField field) {
-    float x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0, field);
-    float y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1, field);
-    float z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2, field);
-    return Vector3f(x, y, z);
+Eigen::Vector3d System::getVelocity(Eigen::Vector3d pos, CellBFECCField field) {
+    double x = getInterpolatedValue( pos.x() / CELL_DIM,         (pos.y() / CELL_DIM) - 0.5f, (pos.z() / CELL_DIM) - 0.5f, 0, field);
+    double y = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f,  pos.y() / CELL_DIM,         (pos.z() / CELL_DIM) - 0.5f, 1, field);
+    double z = getInterpolatedValue((pos.x() / CELL_DIM) - 0.5f, (pos.y() / CELL_DIM) - 0.5f,  pos.z() / CELL_DIM,         2, field);
+    return Vector3d(x, y, z);
 }
 
 std::vector<Vector3i> System::getGridNeighbors(int i, int j, int k){
@@ -156,7 +167,7 @@ std::vector<Vector3i> System::getGridNeighbors(int i, int j, int k){
 }
 
 //// Checks whether a point position is within bounds of the waterGrid
-bool System::isInBounds(float x, float y, float z) {
+bool System::isInBounds(double x, double y, double z) {
     // TODO: bounds checking here?
     bool xIs = (x >= 0) && (x < WATERGRID_X*CELL_DIM);
     bool yIs = (y >= 0) && (y < WATERGRID_Y*CELL_DIM);
@@ -172,7 +183,7 @@ bool System::isInBoundsbyIdx(int i, int j, int k) {
     return iIs && jIs && kIs;
 }
 
-Eigen::Vector3f System::getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field) {
+Eigen::Vector3d System::getVelocityFromField(Eigen::Vector3i pos, CellBFECCField field) {
     switch (field) {
         case OLDVELOCITY:
             return this->m_waterGrid.at(pos).oldVelocity;
@@ -191,12 +202,12 @@ Eigen::Vector3f System::getVelocityFromField(Eigen::Vector3i pos, CellBFECCField
 
 
 //// Get an interpolated data value from the grid
-float System::getInterpolatedValue(float x, float y, float z, int idx) {
+double System::getInterpolatedValue(double x, double y, double z, int idx) {
     int i = floor(x);
     int j = floor(y);
     int k = floor(z);
-    float weightAccum = 0;
-    float totalAccum = 0;
+    double weightAccum = 0;
+    double totalAccum = 0;
     
     if (isInBoundsbyIdx(i, j, k)) {
         weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
@@ -245,12 +256,12 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
 }
 
 //// Get an interpolated data value from the grid with a givn field
-float System::getInterpolatedValue(float x, float y, float z, int idx, CellBFECCField field) {
+double System::getInterpolatedValue(double x, double y, double z, int idx, CellBFECCField field) {
     int i = floor(x);
     int j = floor(y);
     int k = floor(z);
-    float weightAccum = 0;
-    float totalAccum = 0;
+    double weightAccum = 0;
+    double totalAccum = 0;
 
     if (isInBoundsbyIdx(i, j, k)) {
         weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
@@ -295,16 +306,16 @@ float System::getInterpolatedValue(float x, float y, float z, int idx, CellBFECC
     if (-.005 <= weightAccum && weightAccum <= 0.005) {
         return 0;
     }
-    float total = totalAccum / weightAccum;
+    double total = totalAccum / weightAccum;
     return totalAccum / weightAccum;
 }
 
 /************************* DEBUGGING UTILS *****************************/
-bool System::hasNan(Eigen::Vector3f v) {
+bool System::hasNan(Eigen::Vector3d v) {
     return isnan(v[0]) || isnan(v[1]) || isnan(v[2]);
 }
 
-bool System::hasInf(Eigen::Vector3f v) {
+bool System::hasInf(Eigen::Vector3d v) {
     return isinf(v[0]) || isinf(v[1]) || isinf(v[2]);
 }
 
