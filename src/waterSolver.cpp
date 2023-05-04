@@ -1,5 +1,6 @@
 #include "system.h"
 #include <math.h>
+#include <unordered_set>
 
 using namespace Eigen;
 
@@ -246,29 +247,47 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
     return whirl * 0.4f;
 }
 
+///// Applies the external force term in the Navier-Stokes equation to each cell's velocity
+//void System::applyExternalForces(float timeStep) {
+//    std::vector<Vector3i> cellsForcesApplied;
+//    for (int i = 0; i < m_ink.size(); i++) {
+//        Particle currParticle = m_ink[i];
+//        Vector3i centerCellIndices = getCellIndexFromPoint(currParticle.position);
+//        Cell centerCell = m_waterGrid[centerCellIndices];
+//        if (centerCell.forceApplied == false) {
+//            updateForce(centerCellIndices, timeStep);
+//            cellsForcesApplied.push_back(centerCellIndices);
+//        }
+//        std::vector<Vector3i> neighbors = centerCell.neighbors;
+//        for (int j = 0; j < neighbors.size(); j++) {
+//            if (m_waterGrid[neighbors[j]].forceApplied == false) {
+//                updateForce(neighbors[j], timeStep);
+//                cellsForcesApplied.push_back(neighbors[j]);
+//            }
+//        }
+//    }
+
+//    #pragma omp parallel for
+//    for (Vector3i cellIdx: cellsForcesApplied) {
+//        m_waterGrid[cellIdx].forceApplied = false;
+//    }
+//}
+
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
 void System::applyExternalForces(float timeStep) {
-    std::vector<Vector3i> cellsForcesApplied;
+    std::unordered_set<Vector3i, hash_func> cellsForcesApplied;
     for (int i = 0; i < m_ink.size(); i++) {
-        Particle currParticle = m_ink[i];
-        Vector3i centerCellIndices = getCellIndexFromPoint(currParticle.position);
-        Cell centerCell = m_waterGrid[centerCellIndices];
-        if (centerCell.forceApplied == false) {
-            updateForce(centerCellIndices, timeStep);
-            cellsForcesApplied.push_back(centerCellIndices);
-        }
-        std::vector<Vector3i> neighbors = centerCell.neighbors;
+        Vector3i centerCellIndices = getCellIndexFromPoint(m_ink[i].position);
+        cellsForcesApplied.insert(centerCellIndices);
+        std::vector<Vector3i> neighbors = m_waterGrid[centerCellIndices].neighbors;
         for (int j = 0; j < neighbors.size(); j++) {
-            if (m_waterGrid[neighbors[j]].forceApplied == false) {
-                updateForce(neighbors[j], timeStep);
-                cellsForcesApplied.push_back(neighbors[j]);
-            }
+            cellsForcesApplied.insert(neighbors[i]);
+            std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[i]].neighbors;
+            cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
         }
     }
-
-    #pragma omp parallel for
     for (Vector3i cellIdx: cellsForcesApplied) {
-        m_waterGrid[cellIdx].forceApplied = false;
+        updateForce(cellIdx, timeStep);
     }
 }
 
