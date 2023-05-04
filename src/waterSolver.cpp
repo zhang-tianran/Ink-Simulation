@@ -281,8 +281,8 @@ void System::applyExternalForces(double timeStep) {
         cellsForcesApplied.insert(centerCellIndices);
         std::vector<Vector3i> neighbors = m_waterGrid[centerCellIndices].neighbors;
         for (int j = 0; j < neighbors.size(); j++) {
-            cellsForcesApplied.insert(neighbors[i]);
-            std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[i]].neighbors;
+            cellsForcesApplied.insert(neighbors[j]);
+            std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[j]].neighbors;
             cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
         }
     }

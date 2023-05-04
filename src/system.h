@@ -8,9 +8,9 @@
 typedef Eigen::SparseMatrix<double> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 2; /// Water grid length
-const int WATERGRID_Y        = 2; /// Water grid height
-const int WATERGRID_Z        = 2; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const double CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const double DENSITY          = 1; /// Fluid density

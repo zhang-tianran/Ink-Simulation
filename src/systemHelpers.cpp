@@ -303,7 +303,7 @@ double System::getInterpolatedValue(double x, double y, double z, int idx, CellB
         weightAccum += (x - i) * (y - j) * (z - k);
     }
 
-    if (-.005 <= weightAccum && weightAccum <= 0.005) {
+    if (isZero(totalAccum) || isZero(weightAccum)) {
         return 0;
     }
     double total = totalAccum / weightAccum;
