@@ -16,7 +16,7 @@ public:
      * @param numTimesteps, the number of timesteps to do before writing to a file
      * @param totalTimesteps, total number of timesteps to simulate
     */
-    void simulate(int numTimesteps, int totalTimesteps);
+    void simulate(const float renderTimestep, int totalTimesteps);
 
 private:
     System ink_system;
