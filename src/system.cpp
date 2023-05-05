@@ -52,18 +52,29 @@ int nonZeroRand() {
     return (ret != 0) ? ret : 1;
 }
 
-/// Returns a random position within the specified ranges
-Vector3f getRandPosWithinRange(float minX, float maxX,
-                               float minY, float maxY,
-                               float minZ, float maxZ) {
-    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
-    assert(!isinf(x) || !isnan(x));
-    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
-    assert(!isinf(y) || !isnan(y));
-    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
-    assert(!isinf(z) || !isnan(z));
+double randBetween(double min, double max)
+{
+    double result = min + ((double) rand() / RAND_MAX) * (max - min);
+    assert(min <= result && result <= max && !isinf(result) && !isnan(result) );
+    return result;
+}
 
-    return Vector3f(x, y, z);
+/// Returns a random position within the specified ranges
+Vector3f getRandPosWithinRange(double minX, double maxX,
+                               double minY, double maxY,
+                               double minZ, double maxZ) {
+//    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
+//    assert(!isinf(x) || !isnan(x));
+//    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
+//    assert(!isinf(y) || !isnan(y));
+//    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
+//    assert(!isinf(z) || !isnan(z));
+//      return Vector3f(x, y, z);
+    float x = randBetween(minX, maxX);
+    float y = randBetween(minY, maxY);
+    float z = randBetween(minZ, maxZ);
+    return Vector3f(x,y,z);
+
 }
 
 /// Initializes INIT_NUM_PARTICLES Particle structs
@@ -72,7 +83,10 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+//            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/2.f-.2, WATERGRID_X/2.f+.2,
+                                                          WATERGRID_Y - 0.1, WATERGRID_Y - 0.1,
+                                                          WATERGRID_Z/2.f-.2, WATERGRID_Z/2.f+.2), // CUSTOMIZABLE
             .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE

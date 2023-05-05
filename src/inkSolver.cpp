@@ -2,9 +2,10 @@
 using namespace Eigen;
 using namespace std;
 
-void System::solve(){
-    float timeStep = updateWaterGrid();
+double System::solve(double timeToNextRender){
+    double timeStep = updateWaterGrid(timeToNextRender);
     updateParticles(timeStep);
+    return timeStep;
 }
 
 void System::updateParticles(float timeStep){

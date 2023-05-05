@@ -64,7 +64,7 @@ public:
     System();
 
     void init();
-    void solve();
+    double solve(double timeToNextRender);
     const std::vector<Particle>& getInkParticles();
 
     // check if particles or watergrid values for pos/vel have inf or nans
@@ -77,8 +77,8 @@ private:
     /// Water Grid
     std::unordered_map<Eigen::Vector3i, Cell, hash_func> m_waterGrid;
     void  initWaterGrid();
-    float updateWaterGrid();
-    float calcTimeStep();
+    double updateWaterGrid(double timeToNextRender);
+    double calcTimeStep(double timeToNextRender);
     void  updateVelocityField(float timeStep);
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
