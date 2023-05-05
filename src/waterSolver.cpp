@@ -53,28 +53,11 @@ void System::updateVelocityField(float timeStep) {
     applyConvection(timeStep);
     checkNanAndInf();
 
-#pragma omp parallel for
-for (auto &kv : m_waterGrid) {
-    kv.second.oldVelocity = kv.second.currVelocity;
-}
-
     applyExternalForces(timeStep);
     checkNanAndInf();
 
-
-#pragma omp parallel for
-for (auto &kv : m_waterGrid) {
-    kv.second.oldVelocity = kv.second.currVelocity;
-}
-
     applyViscosity(timeStep);
     checkNanAndInf();
-
-
-#pragma omp parallel for
-for (auto &kv : m_waterGrid) {
-    kv.second.oldVelocity = kv.second.currVelocity;
-}
 
     applyPressure(timeStep);
     checkNanAndInf();
@@ -104,13 +87,12 @@ void System::applyConvection(float timeStep) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 Vector3f virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep);
-                Vector3f newVelocity(0, 0, 0);
 
-                if (isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
-                    newVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+                if (!isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
+                    continue;
                 }
 
-                m_waterGrid[Vector3i(i, j, k)].currVelocity = newVelocity;
+                m_waterGrid[Vector3i(i, j, k)].currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
 
                 // calculate curl
                 m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
@@ -154,7 +136,7 @@ void System::applyExternalForces(float timeStep) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
-               // m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
             }
         }
     }

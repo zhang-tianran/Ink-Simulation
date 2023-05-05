@@ -39,10 +39,10 @@ add_executable(${PROJECT_NAME}
 )
 
 #include openmp
-#find_package(OpenMP)
-#if(OpenMP_CXX_FOUND)
-#    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
-#endif()
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 
 # Specifies libraries to be linked (Qt components, glew, etc)
