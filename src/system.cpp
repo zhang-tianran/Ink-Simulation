@@ -32,10 +32,8 @@ void System::initWaterGrid() {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 /// Create the cell
                 Cell cell {
-                    .oldVelocity  = Vector3d(0, 0, 0), // CUSTOMIZABLE
-                    .currVelocity = Vector3d(0, 0, 0), // CUSTOMIZABLE
-                    .forceApplied = false,
-                    .neighbors = getGridNeighbors(i, j, k)
+                    .oldVelocity  = Vector3f(0, 0, 0), // CUSTOMIZABLE
+                    .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
                 };
 
                 /// Insert into m_waterGrid
@@ -43,30 +41,29 @@ void System::initWaterGrid() {
             }
         }
     }
-    double product = WATERGRID_X*WATERGRID_Z*WATERGRID_Y;
-    double size = m_waterGrid.size();
+    float product = WATERGRID_X*WATERGRID_Z*WATERGRID_Y;
+    float size = m_waterGrid.size();
     assert(size == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
     initPressureA();
 }
 
 int nonZeroRand() {
     int ret = rand();
-    return ret;
-//    return (ret != 0) ? ret : 1;
+    return (ret != 0) ? ret : 1;
 }
 
 /// Returns a random position within the specified ranges
-Vector3d getRandPosWithinRange(double minX, double maxX,
-                               double minY, double maxY,
-                               double minZ, double maxZ) {
-    double x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
+Vector3f getRandPosWithinRange(float minX, float maxX,
+                               float minY, float maxY,
+                               float minZ, float maxZ) {
+    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
     assert(!isinf(x) || !isnan(x));
-    double y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
+    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
     assert(!isinf(y) || !isnan(y));
-    double z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
+    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
     assert(!isinf(z) || !isnan(z));
 
-    return Vector3d(x, y, z);
+    return Vector3f(x, y, z);
 }
 
 /// Initializes INIT_NUM_PARTICLES Particle structs
@@ -75,10 +72,8 @@ void System::initParticles() {
     for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
         /// Create the particle
         Particle particle {
-            .position = getRandPosWithinRange(WATERGRID_X/2.f-0.2, WATERGRID_X/2.f+0.2,
-                                              WATERGRID_Y - 0.1, WATERGRID_Y - 0.1,
-                                              WATERGRID_Z/2.f-0.2, WATERGRID_Z/2.f+0.2), // CUSTOMIZABLE
-            .velocity = Vector3d{0, 0, 0}, // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+            .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE
         };
@@ -93,5 +88,3 @@ void System::initParticles() {
 const std::vector<Particle>& System::getInkParticles() {
     return m_ink;
 }
-
-
