@@ -23,6 +23,8 @@ void InkSim::simulate(int numTimesteps, int totalTimesteps) {
         timestepCounter += 1;
     }
 
+    writeWaterGridVelocities();
+
     /// For recording time
     auto endTS = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = endTS-startTS;
@@ -53,6 +55,46 @@ void InkSim::writeToFile(int frameNum) {
         Eigen::Vector3f currParticle = inkParticles[i].position;
         std::string position = std::to_string(currParticle.x()) + " " + std::to_string(currParticle.y()) + " " + std::to_string(currParticle.z());
         myfile << position + "\n";
+    }
+    myfile.close();
+}
+
+void InkSim::writeWaterGridVelocities() {
+    std::string filename = this->writeDirectory + "/" + "velocityField.ply";
+    std::ofstream myfile;
+
+    std::cout << "writing to: " + filename << std::endl;
+    std::string numVectors = std::to_string(WATERGRID_X * WATERGRID_Y * WATERGRID_Z);
+    std::cout << "recording " + numVectors + " velocities" << std::endl;
+
+    // Set up header for velocityPositions.ply
+    myfile.open(filename);
+    myfile << "ply\n";
+    myfile << "format ascii 1.0\n";
+    myfile << "element vertex " + numVectors + "\n";
+    myfile << "property float x\n";
+    myfile << "property float y\n";
+    myfile << "property float z\n";
+    myfile << "property float u\n";
+    myfile << "property float v\n";
+    myfile << "property float w\n";
+    myfile << "end_header\n";
+
+    // Input velocity positions
+    for (auto kv : ink_system.getWaterGrid()) {
+        // Get cell center position
+        float offset = CELL_DIM/2.f;
+        Eigen::Vector3f cellCenter = Eigen::Vector3f{kv.first.x() + offset, kv.first.y() + offset, kv.first.z() + offset};
+
+        // Get cell velocity
+        Eigen::Vector3f cellVel = kv.second.currVelocity;
+
+        // Convert cell position and velocity into a string
+        std::string str = std::to_string(cellCenter.x()) + " " + std::to_string(cellCenter.y()) + " " + std::to_string(cellCenter.z()) + " "
+                + std::to_string(cellVel.x()) + " " + std::to_string(cellVel.y()) + " " + std::to_string(cellVel.z());
+
+        // Write to file
+        myfile << str + "\n";
     }
     myfile.close();
 }

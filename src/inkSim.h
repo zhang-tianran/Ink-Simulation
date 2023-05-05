@@ -24,6 +24,8 @@ private:
 
     void writeToFile();
     void writeToFile(int frameNum);
+
+    void writeWaterGridVelocities();
 };
 
 #endif // INK_SIM_H

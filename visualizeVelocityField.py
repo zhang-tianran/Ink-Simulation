@@ -1,36 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-# TODO: Change this to read in grid dimensions instead of hard-coding
-WATERGRID_X = 2
-WATERGRID_Y = 2
-WATERGRID_Z = 2
-
+from plyfile import PlyData, PlyElement
 
 # Returns two numpy arrays:
 #   1) The starting positions of your velocity vectors
 #   2) The directions of the velocity vectors
 def load_water_grid():
-    positions = np.array([
-        (0, 0, 0), \
-        (1, 0, 0), \
-        (0, 1, 0), \
-        (0, 0, 1), \
-        (1, 1, 0), \
-        (0, 1, 1), \
-        (1, 0, 1), \
-        (1, 1, 1), \
-        ])
-    directions = np.array([
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        (1, 1, 1), \
-        ])
+    plydata = PlyData.read('./output/velocityField.ply')
+
+    x = np.array(plydata['vertex']['x'])
+    y = np.array(plydata['vertex']['y'])
+    z = np.array(plydata['vertex']['z'])
+    positions = np.dstack((x, y, z))[0]
+
+    u = np.array(plydata['vertex']['u'])
+    v = np.array(plydata['vertex']['v'])
+    w = np.array(plydata['vertex']['w'])
+    directions = np.dstack((u, v, w))[0]
     return positions, directions
 
 

@@ -88,3 +88,7 @@ void System::initParticles() {
 const std::vector<Particle>& System::getInkParticles() {
     return m_ink;
 }
+
+const std::unordered_map<Eigen::Vector3i, Cell, hash_func> System::getWaterGrid() {
+    return m_waterGrid;
+}

@@ -8,9 +8,9 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 14; /// Water grid length
-const int WATERGRID_Y        = 14; /// Water grid height
-const int WATERGRID_Z        = 14; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 
 const float DENSITY          = 1; /// Fluid density
@@ -66,6 +66,7 @@ public:
     void init();
     void solve();
     const std::vector<Particle>& getInkParticles();
+    const std::unordered_map<Eigen::Vector3i, Cell, hash_func> getWaterGrid();
 
     // check if particles or watergrid values for pos/vel have inf or nans
     void checkNanAndInf();
