@@ -102,5 +102,3 @@ void System::initParticles() {
 const std::vector<Particle>& System::getInkParticles() {
     return m_ink;
 }
-
-

@@ -111,7 +111,7 @@ private:
     Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
-    
+
     /// Boundary Checking: Check if a point (x, y, z) is in bounds of the water grid
     bool isInBounds(float x, float y, float z);
     bool isInBoundsbyIdx(int i, int j, int k);
@@ -120,5 +120,3 @@ private:
    bool hasNan(Eigen::Vector3f v);
    bool hasInf(Eigen::Vector3f v);
 };
-
-

@@ -124,7 +124,7 @@ std::vector<Vector3i> System::getGridNeighbors(int i, int j, int k){
     std::vector<Vector3i> neighbors;
     if (isInBoundsbyIdx(i + 1, j, k)) {
         neighbors.push_back(Vector3i(i + 1, j, k));
-    } 
+    }
     if (isInBoundsbyIdx(i - 1, j, k)) {
         neighbors.push_back(Vector3i(i - 1, j, k));
     }
@@ -167,7 +167,7 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
     int k = floor(z);
     float weightAccum = 0;
     float totalAccum = 0;
-    
+
     if (isInBounds(i, j, k)) {
         weightAccum += (i + 1 - x) * (j + 1 - y) * (k + 1 - z);
         totalAccum  += (i + 1 - x) * (j + 1 - y) * (k + 1 - z) * m_waterGrid.at(Vector3i(i, j, k)).oldVelocity[idx];
@@ -197,7 +197,7 @@ float System::getInterpolatedValue(float x, float y, float z, int idx) {
         totalAccum += (x - i) * (j + 1 - y) * (z - k) * m_waterGrid.at(Vector3i(i + 1, j, k + 1)).oldVelocity[idx];
         totalAccum += (x - i) * (j + 1 - y) * (z - k);
     }
-    
+
     if (isInBounds(i, j+1, k+1)) {
         totalAccum  += (i + 1 - x) * (y - j) * (z - k) * m_waterGrid.at(Vector3i(i, j + 1, k + 1)).oldVelocity[idx];
         weightAccum += (i + 1 - x) * (y - j) * (z - k);
