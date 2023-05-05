@@ -3,13 +3,13 @@
 
 using namespace Eigen;
 
-float System::updateWaterGrid() {
-    float timeStep = calcTimeStep();
+double System::updateWaterGrid(double timeToNextRender) {
+    double timeStep = calcTimeStep(timeToNextRender);
     updateVelocityField(timeStep);
     return timeStep;
 }
 
-float System::calcTimeStep() {
+double System::calcTimeStep(double timeToNextRender) {
     float maxVelocity = 0;
     for (auto kv : m_waterGrid) {
         if (maxVelocity < kv.second.oldVelocity.norm()) {
@@ -34,6 +34,7 @@ float System::calcTimeStep() {
 //        std::cout << timeStep << std::endl;
 
         assert(timeStep <= MAX_TIMESTEP && timeStep >= MIN_TIMESTEP);
+        timeStep = std::min(timeToNextRender, (double)timeStep);
         return timeStep;
     }
 }

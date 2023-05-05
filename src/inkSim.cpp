@@ -8,17 +8,24 @@ InkSim::InkSim(std::string writeDirectory) {
     this->writeDirectory = writeDirectory;
 }
 
-void InkSim::simulate(int numTimesteps, int totalTimesteps) {
+void InkSim::simulate(const float renderTimestep, int totalTimesteps) {
     /// For recording time
     auto startTS = std::chrono::system_clock::now();
     auto startTime = std::chrono::system_clock::to_time_t(startTS);
     std::cout << "\e[32mSimulation started at: \e[m" << std::ctime(&startTime) << std::endl;
 
     int timestepCounter = 1;
+    int currFrame = 1;
+    float timeSinceLastRender = 0;
     while (timestepCounter <= totalTimesteps) {
-        this->ink_system.solve();
-        if (timestepCounter % numTimesteps == 0) {
-            writeToFile(timestepCounter/numTimesteps);
+        float timeStep = this->ink_system.solve(renderTimestep - timeSinceLastRender);
+//        std::cout << "TIMESTEP INK: " << timeStep << std::endl;
+//        std::cout << "NUM TIMESTEPS: " << timestepCounter << std::endl;
+        timeSinceLastRender += timeStep;
+        if (timeSinceLastRender>=renderTimestep) {
+            writeToFile(currFrame);
+            currFrame+=1;
+            timeSinceLastRender = 0;
         }
         timestepCounter += 1;
     }
