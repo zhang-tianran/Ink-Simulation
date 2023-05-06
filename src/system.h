@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <unordered_set>
 
 typedef Eigen::SparseMatrix<float> SpMat;
 
@@ -12,6 +13,7 @@ const int WATERGRID_X        = 14; /// Water grid length
 const int WATERGRID_Y        = 14; /// Water grid height
 const int WATERGRID_Z        = 14; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
+const int BUFFER_SIZE        = 1; /// Dictates the number/levels of neighbors
 
 const float DENSITY          = 1; /// Fluid density
 
@@ -35,6 +37,8 @@ typedef struct Cell {
     Eigen::Vector3f currVelocity;
 
     Eigen::Vector3f curl;
+    bool forceApplied;
+    std::vector<Eigen::Vector3i> neighbors;
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
@@ -83,6 +87,7 @@ private:
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
+    void updateForce(Eigen::Vector3i idx, double timeStep);
     Eigen::Vector3f getVort(int i, int j, int k);
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);

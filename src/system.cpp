@@ -34,6 +34,8 @@ void System::initWaterGrid() {
                 Cell cell {
                     .oldVelocity  = Vector3f(0, 0, 0), // CUSTOMIZABLE
                     .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
+                    .forceApplied = false,
+                    .neighbors = getGridNeighbors(i, j, k)
                 };
 
                 /// Insert into m_waterGrid
