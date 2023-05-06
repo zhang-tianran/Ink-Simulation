@@ -13,7 +13,7 @@ const int WATERGRID_X        = 8; /// Water grid length
 const int WATERGRID_Y        = 8; /// Water grid height
 const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
-const int BUFFER_SIZE        = 1; /// Dictates the number/levels of neighbors
+const int BUFFER_SIZE        = 3; /// Dictates the number/levels of neighbors
 
 const float DENSITY          = 1; /// Fluid density
 

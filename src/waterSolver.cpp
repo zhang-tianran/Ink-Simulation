@@ -173,7 +173,14 @@ void System::applyExternalForces(float timeStep) {
             cellsForcesApplied.insert(neighbors[i]);
             if (BUFFER_SIZE >=2) {
                 std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[i]].neighbors;
-                cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
+//                cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
+                for (int j = 0; j < neighbors2.size(); j++) {
+                    cellsForcesApplied.insert(neighbors2[i]);
+                    if (BUFFER_SIZE >=3) {
+                        std::vector<Vector3i> neighbors3 = m_waterGrid[neighbors2[i]].neighbors;
+                        cellsForcesApplied.insert(neighbors3.begin(), neighbors3.end());
+                    }
+                }
             }
         }
     }
