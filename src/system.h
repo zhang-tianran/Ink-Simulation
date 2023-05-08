@@ -10,22 +10,23 @@ typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
 const int WATERGRID_X        = 8; /// Water grid length
-const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Y        = 15; /// Water grid height
 const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
-const int BUFFER_SIZE        = 3; /// Dictates the number/levels of neighbors
+const int BUFFER_SIZE        = 2; /// Dictates the number/levels of neighbors
 
 const float DENSITY          = 1; /// Fluid density
 
 const float K_VORT           = 1; /// strength of vorticity
 
-const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+//const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const float VISCOSITY        = 0.9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 20000; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 30000; /// Starting number of particles
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.98, 0);
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 
 const float K_CFL = 0.2f;
 const float MIN_TIMESTEP = 0.01f;
