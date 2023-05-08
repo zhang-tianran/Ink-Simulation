@@ -4,14 +4,16 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <unordered_set>
 
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 14; /// Water grid length
-const int WATERGRID_Y        = 14; /// Water grid height
-const int WATERGRID_Z        = 14; /// Water grid width
+const int WATERGRID_X        = 8; /// Water grid length
+const int WATERGRID_Y        = 8; /// Water grid height
+const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
+const int BUFFER_SIZE        = 3; /// Dictates the number/levels of neighbors
 
 const float DENSITY          = 1; /// Fluid density
 
@@ -35,6 +37,8 @@ typedef struct Cell {
     Eigen::Vector3f currVelocity;
 
     Eigen::Vector3f curl;
+    bool forceApplied;
+    std::vector<Eigen::Vector3i> neighbors;
 
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const Cell& obj);
@@ -66,6 +70,7 @@ public:
     void init();
     double solve(double timeToNextRender);
     const std::vector<Particle>& getInkParticles();
+    const std::unordered_map<Eigen::Vector3i, Cell, hash_func> getWaterGrid();
 
     // check if particles or watergrid values for pos/vel have inf or nans
     void checkNanAndInf();
@@ -83,6 +88,7 @@ private:
     Eigen::Vector3f traceParticle(float x, float y, float z, float t);
     void  applyConvection(float timeStep);
     void  applyExternalForces(float timeStep);
+    void updateForce(Eigen::Vector3i idx, double timeStep);
     Eigen::Vector3f getVort(int i, int j, int k);
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);

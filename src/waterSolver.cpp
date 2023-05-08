@@ -1,6 +1,7 @@
 #include "system.h"
 #include <math.h>
 
+
 using namespace Eigen;
 
 double System::updateWaterGrid(double timeToNextRender) {
@@ -130,7 +131,21 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
 }
 
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
+//void System::applyExternalForces(float timeStep) {
+//    #pragma omp parallel for collapse(3)
+//    for (int i = 0; i < WATERGRID_X; i++) {
+//        for (int j = 0; j < WATERGRID_Y; j++) {
+//            for (int k = 0; k < WATERGRID_Z; k++) {
+//                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
+//                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
+//               // m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
+//            }
+//        }
+//    }
+//}
+
 void System::applyExternalForces(float timeStep) {
+<<<<<<< HEAD
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
@@ -138,9 +153,41 @@ void System::applyExternalForces(float timeStep) {
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
                 m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
+=======
+    std::unordered_set<Vector3i, hash_func> cellsForcesApplied;
+    assert(BUFFER_SIZE >=1);
+    for (int i = 0; i < m_ink.size(); i++) {
+        Vector3i centerCellIndices = getCellIndexFromPoint(m_ink[i].position);
+        cellsForcesApplied.insert(centerCellIndices);
+        std::vector<Vector3i> neighbors = m_waterGrid[centerCellIndices].neighbors;
+        for (int j = 0; j < neighbors.size(); j++) {
+            cellsForcesApplied.insert(neighbors[i]);
+            if (BUFFER_SIZE >=2) {
+                std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[i]].neighbors;
+//                cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
+                for (int j = 0; j < neighbors2.size(); j++) {
+                    cellsForcesApplied.insert(neighbors2[i]);
+                    if (BUFFER_SIZE >=3) {
+                        std::vector<Vector3i> neighbors3 = m_waterGrid[neighbors2[i]].neighbors;
+                        cellsForcesApplied.insert(neighbors3.begin(), neighbors3.end());
+                    }
+                }
+>>>>>>> d482816f9827a9cb8f1b3a17741146b59519f7f7
             }
         }
     }
+
+    for (Vector3i cellIdx: cellsForcesApplied) {
+        updateForce(cellIdx, timeStep);
+    }
+}
+
+void System::updateForce(Vector3i idx, double timeStep){
+    m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
+    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
+    m_waterGrid[idx].currVelocity += timeStep * getVort(idx[0],idx[1],idx[2]); /// Apply vorticity confinement NOTE THIS WAS SHIFTED IN MAIN
+//    auto v = m_waterGrid[idx];
+    m_waterGrid[idx].forceApplied = true;
 }
 
 Vector3f System::getVort(int i, int j, int k){

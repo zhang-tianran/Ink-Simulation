@@ -34,6 +34,8 @@ void System::initWaterGrid() {
                 Cell cell {
                     .oldVelocity  = Vector3f(0, 0, 0), // CUSTOMIZABLE
                     .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
+                    .forceApplied = false,
+                    .neighbors = getGridNeighbors(i, j, k)
                 };
 
                 /// Insert into m_waterGrid
@@ -101,4 +103,8 @@ void System::initParticles() {
 /************************** GETTERS ************************************/
 const std::vector<Particle>& System::getInkParticles() {
     return m_ink;
+}
+
+const std::unordered_map<Eigen::Vector3i, Cell, hash_func> System::getWaterGrid() {
+    return m_waterGrid;
 }
