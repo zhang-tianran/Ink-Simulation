@@ -11,6 +11,7 @@ typedef Eigen::SparseMatrix<float> SpMat;
 // ============== Global Constants ==============
 
 const std::string PART_FILE = "";
+const bool USE_LIFETIME = false;
 const int WATERGRID_X = 8; /// Water grid length
 const int WATERGRID_Y = 8; /// Water grid height
 const int WATERGRID_Z = 8; /// Water grid width
@@ -113,6 +114,7 @@ private:
     std::vector<Particle> m_ink;
     void initParticles();
     void updateParticles(float timeStep);
+    void emitParticleHemisphere(float radius);
 
     /// Getters
     Eigen::Vector3f getGradient(int i, int j, int k, Eigen::VectorXf g);
