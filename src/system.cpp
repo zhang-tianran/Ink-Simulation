@@ -86,9 +86,9 @@ void System::initParticles() {
         /// Create the particle
         Particle particle {
 //            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
-            .position = getRandPosWithinRange(WATERGRID_X/2.f-.2, WATERGRID_X/2.f+.2,
-                                                          WATERGRID_Y - 1.1, WATERGRID_Y - 1.1,
-                                                          WATERGRID_Z/2.f-.2, WATERGRID_Z/2.f+.2), // CUSTOMIZABLE
+            .position = getRandPosWithinRange(WATERGRID_X/2.f-WATERGRID_X/5.f, WATERGRID_X/2.f+WATERGRID_X/5.f,
+                                                          WATERGRID_Y - 1.5, WATERGRID_Y - 1.,
+                                                          WATERGRID_Z/2.f-WATERGRID_Z/3.f, WATERGRID_Z/2.f+WATERGRID_Z/3.f), // CUSTOMIZABLE
             .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
             .opacity  = 1.f,
             .lifeTime = 5.f // CUSTOMIZABLE

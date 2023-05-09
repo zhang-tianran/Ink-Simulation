@@ -19,14 +19,14 @@ AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 # -------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
 M_PI = 3.1415926535897932
-END_FRAME = 100
+END_FRAME = 93
 ANIM_STEP = 8 # amt of time between frames
 USE_ANIM = True
 RENDER_FRAMES = False
 RENDER_ENGINE = 'BLENDER_EEVEE'
 
 # Grid Constants
-DIMENSIONS = (8,15,8)
+DIMENSIONS = (8,25,8)
 GRID_THICKNESS = 0.01 # thickness of grid lines
 BORDER_THICKNESS = 0.1 # thickness of grid border
 SHOW_GRID = True # show the grid lines; otherwise, the just the grid border is shown
@@ -320,7 +320,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 		importedObject = bpy.context.object
 			
 		## Camera
-		camera_object.location = [7,7,49]
+		camera_object.location = [7,7,80]
 
 		
 		if ink_mesh is not None:

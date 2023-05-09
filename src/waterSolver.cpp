@@ -192,7 +192,7 @@ void System::applyExternalForces(float timeStep) {
 
 void System::updateForce(Vector3i idx, double timeStep){
     m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
-//    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
+    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
     m_waterGrid[idx].currVelocity += timeStep * getVort(idx[0],idx[1],idx[2]); /// Apply vorticity confinement NOTE THIS WAS SHIFTED IN MAIN
 //    auto v = m_waterGrid[idx];
     m_waterGrid[idx].forceApplied = true;

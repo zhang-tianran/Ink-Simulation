@@ -10,20 +10,20 @@ typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
 const int WATERGRID_X        = 8; /// Water grid length
-const int WATERGRID_Y        = 15; /// Water grid height
+const int WATERGRID_Y        = 25; /// Water grid height
 const int WATERGRID_Z        = 8; /// Water grid width
 const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
 const int BUFFER_SIZE        = 2; /// Dictates the number/levels of neighbors
 
-const float DENSITY          = 1; /// Fluid density
+const float DENSITY          = .9; /// Fluid density
 
-const float K_VORT           = 1; /// strength of vorticity
+const float K_VORT           = 2; /// strength of vorticity
 
 //const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
-const float VISCOSITY        = 0.9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const float VISCOSITY        = .9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 30000; /// Starting number of particles
+const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
@@ -58,6 +58,7 @@ typedef struct Particle {
 struct hash_func {
     size_t operator()(const Eigen::Vector3i &v) const
     {
+//        std::cout<<v.x()<<v.y()<<v.z()<<std::endl;
         assert(v.x()>=0 && v.y()>=0 && v.z()>=0);
         return 541 * v.x() + 79 * v.y() + 31 * v.z();
     }
