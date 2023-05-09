@@ -19,14 +19,14 @@ AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 # -------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
 M_PI = 3.1415926535897932
-END_FRAME = 81
+END_FRAME = 100
 ANIM_STEP = 8 # amt of time between frames
 USE_ANIM = True
 RENDER_FRAMES = False
 RENDER_ENGINE = 'BLENDER_EEVEE'
 
 # Grid Constants
-DIMENSIONS = (14,14,14)
+DIMENSIONS = (8,15,8)
 GRID_THICKNESS = 0.01 # thickness of grid lines
 BORDER_THICKNESS = 0.1 # thickness of grid border
 SHOW_GRID = True # show the grid lines; otherwise, the just the grid border is shown
@@ -132,7 +132,7 @@ def makeInkMaterial():
 	material.use_nodes = True
 	material_output = material.node_tree.nodes.get('Material Output')
 	principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
-	principled_bsdf.inputs["Emission"].default_value = (.01, .01, .01, float(1.0))
+	principled_bsdf.inputs["Emission"].default_value = (.001, .01, .01, float(.5))
 	hue_saturation = material.node_tree.nodes.new('ShaderNodeHueSaturation')
 	hue_saturation.location.x -= 200
 	hue_saturation.location.y -= 50
@@ -192,7 +192,7 @@ def createGeometryNodes(importedObject, object_material):
 	primitive = nodes.new(type="GeometryNodeMeshIcoSphere")
 	primitive.location.x -= 100
 	primitive.location.y -= 200
-	primitive.inputs["Radius"].default_value = 0.1
+	primitive.inputs["Radius"].default_value = 0.06
 	set_material= nodes.new(type="GeometryNodeSetMaterial")
 	set_material.location.x += 100
 	set_material.location.y -= 200
@@ -263,6 +263,7 @@ def create_animation(anim_data, mesh, frames):
 	data_path = "vertices[%d].co"
 	for index, v in enumerate(me.vertices):
 		fcurves = [action.fcurves.new(data_path % v.index, index =  i) for i in range(3)]
+		print(index)
 		for t in frames:
 			co_kf = anim_data[t-1][index]
 			insert_keyframe(fcurves, t, co_kf)
@@ -277,6 +278,7 @@ def render_animation():
 	bpy.context.scene.render.filepath = output_dir + "/animation"
 
 	# Render the animation
+	print("Rendering the animation. ")
 	bpy.ops.render.render(animation=True)
 #------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
@@ -304,10 +306,6 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	# set render settings
 	bpy.context.scene.frame_end = endFrame
 	bpy.context.scene.frame_step = 1
-	# enable motion blur
-	bpy.context.scene.render.use_motion_blur = True
-	# Set the shutter and samples to maximum values
-	bpy.context.scene.render.motion_blur_shutter = 1.0
 
 	# Loop over the frames.
 	ink_mesh = None
@@ -350,6 +348,7 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 				light_created = True
 			
 			ink_mesh = importedObject
+			# importedObject.name = "inkMesh"
 			ink_coords = np.array([v.co for v in ink_mesh.data.vertices])
 			data.append(ink_coords)
 
@@ -360,7 +359,23 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 			bpy.ops.render.render(write_still = True) 
 
 	if USE_ANIM:
-		bpy.context.scene.render.use_motion_blur = True
+		print("USING ANIM")
+		# # Get a reference to the object by name
+		# obj = bpy.data.objects["inkMesh"]
+
+		# # Set the motion blur parameters
+		# obj.motion_blur.shutter = 1.0
+		# obj.motion_blur.shutter_curve = 1.0
+		# obj.motion_blur.shutter_duration = 'CENTER'
+		# obj.motion_blur.use_motion_blur = True
+		# bpy.context.scene.render.use_motion_blur = True
+		# bpy.context.scene.render.motion_blur_shutter = 1.0
+		# bpy.context.scene.render.motion_blur_shutter_curve = 1.0
+		# bpy.context.scene.render.motion_blur_shutter_duration = 'CENTER'
+		# # enable motion blur
+		# bpy.context.scene.render.use_motion_blur = True
+		# # Set the shutter and samples to maximum values
+		# bpy.context.scene.render.motion_blur_shutter = 1.0
 		frames = list(range(startFrame, endFrame))
 		create_animation(data, ink_mesh, frames)
 		render_animation()
