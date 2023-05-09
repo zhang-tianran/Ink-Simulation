@@ -9,15 +9,18 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 8; /// Water grid length
-const int WATERGRID_Y        = 15; /// Water grid height
-const int WATERGRID_Z        = 8; /// Water grid width
-const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
-const int BUFFER_SIZE        = 2; /// Dictates the number/levels of neighbors
 
-const float DENSITY          = 1; /// Fluid density
+const std::string PART_FILE = "";
+const int WATERGRID_X = 8; /// Water grid length
+const int WATERGRID_Y = 8; /// Water grid height
+const int WATERGRID_Z = 8; /// Water grid width
+const float CELL_DIM = 1; /// Cell dimension (is a cube, so length == width == height)
+const int BUFFER_SIZE = 3; /// Dictates the number/levels of neighbors
 
-const float K_VORT           = 1; /// strength of vorticity
+
+const float DENSITY = 1; /// Fluid density
+
+const float K_VORT = 1; /// strength of vorticity
 
 //const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float VISCOSITY        = 0.9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
@@ -56,9 +59,9 @@ typedef struct Particle {
 } Particle;
 
 struct hash_func {
-    size_t operator()(const Eigen::Vector3i &v) const
+    size_t operator()(const Eigen::Vector3i& v) const
     {
-        assert(v.x()>=0 && v.y()>=0 && v.z()>=0);
+        assert(v.x() >= 0 && v.y() >= 0 && v.z() >= 0);
         return 541 * v.x() + 79 * v.y() + 31 * v.z();
     }
 };
@@ -79,6 +82,9 @@ public:
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const System& obj);
 private:
+
+    // init particles
+    void initFromFile();
 
     /// Water Grid
     std::unordered_map<Eigen::Vector3i, Cell, hash_func> m_waterGrid;
@@ -115,7 +121,7 @@ private:
     Eigen::Vector3f getCurlGradient(int i, int j, int k);
     float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
-    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
+    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f& pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
 
@@ -124,6 +130,6 @@ private:
     bool isInBoundsbyIdx(int i, int j, int k);
 
     /// DEBUGGING
-   bool hasNan(Eigen::Vector3f v);
-   bool hasInf(Eigen::Vector3f v);
+    bool hasNan(Eigen::Vector3f v);
+    bool hasInf(Eigen::Vector3f v);
 };

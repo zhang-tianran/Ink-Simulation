@@ -145,15 +145,6 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
 //}
 
 void System::applyExternalForces(float timeStep) {
-<<<<<<< HEAD
-    #pragma omp parallel for collapse(3)
-    for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Y; j++) {
-            for (int k = 0; k < WATERGRID_Z; k++) {
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * gravity; /// Apply gravity
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * applyWhirlPoolForce(Vector3i(i, j, k)); /// Apply whirlpool force
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * getVort(i, j, k); /// Apply vorticity confinement
-=======
     std::unordered_set<Vector3i, hash_func> cellsForcesApplied;
     assert(BUFFER_SIZE >=1);
     for (int i = 0; i < m_ink.size(); i++) {
@@ -172,7 +163,6 @@ void System::applyExternalForces(float timeStep) {
                         cellsForcesApplied.insert(neighbors3.begin(), neighbors3.end());
                     }
                 }
->>>>>>> d482816f9827a9cb8f1b3a17741146b59519f7f7
             }
         }
     }
