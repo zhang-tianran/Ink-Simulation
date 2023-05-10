@@ -16,7 +16,7 @@ void System::emitParticleHemisphere(float radius) {
     Vector3f up = Vector3f(0, 1, 0);
     Vector3f axis = (surfaceNormal + up).normalized();
     AngleAxisf rot(M_PI, axis);
-    for (std::vector<Particle> ink: m_ink) {
+    for (std::vector<Particle>& ink: m_ink) {
         for (float i = 0; i < twoPi; i += fraction) {
             for (float j = 0; j < M_PI; j += fraction) {
                 float x = radius*sin(j) * sin(i);
@@ -43,7 +43,7 @@ void System::updateParticles(float timeStep){
     checkNanAndInf();
 
     #pragma omp parallel for collapse(2)
-    for (std::vector<Particle> ink: m_ink) {
+    for (std::vector<Particle>& ink: m_ink) {
         for (Particle &inkPtcl: ink) {
             // equation 9
             inkPtcl.velocity = DENSITY * getVelocity(inkPtcl.position);

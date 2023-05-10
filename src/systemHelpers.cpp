@@ -230,7 +230,7 @@ void System::checkNanAndInf() {
 
     // check ink
     #pragma omp parallel for collapse(2)
-    for (std::vector<Particle> ink: m_ink) {
+    for (std::vector<Particle>& ink: m_ink) {
         for (auto& particle : ink) {
             assert(!hasNan(particle.position) && !hasInf(particle.position));
             assert(!hasNan(particle.velocity) && !hasInf(particle.position));
