@@ -6,7 +6,6 @@
 # and: http://blenderartists.org/forum/showthread.php?320309-How-to-import-ply-files-from-script
 import bpy
 from typing import Tuple
-import numpy as np
 import struct
 
 # Options.
@@ -294,16 +293,14 @@ def getVertsFromBinary(path_to_ply):
 			line = f.readline().decode("utf-8")
 			header += line
 			if "element vertex" in line:
-				num_verts = int(line.split()[-1])
-			else:
-				print("COULD NOT READ NUM VERTICES IN PLY")
-
+				num_verts = int(line.split()[-1])				
 		# Read the binary data for the vertices
 		verts = []
 		for i in range(num_verts):
 			vert_data = struct.unpack("<fff", f.read(12))
 			verts.append(vert_data)
-		return verts
+	print(path_to_ply)
+	return verts
 
 def make_and_link_mesh(verts):
 	mesh_data = bpy.data.meshes.new(name="NewMesh")
@@ -314,7 +311,11 @@ def make_and_link_mesh(verts):
 	obj = bpy.data.objects.new(name="NewObject", object_data=mesh_data)
 	bpy.context.scene.collection.objects.link(obj)
 	return obj
-	
+
+#------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------
+
 def RenderSequence(startFrame = 0, endFrame = 1):
 	# Clear the scene:
 	clean_scene()
@@ -343,48 +344,32 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	light_created = False
 	data = []
 	for currentFrame in range(startFrame, endFrame):
-		# # Import the object (Either obj or ply).
-		# fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
-		# bpy.ops.import_mesh.ply(filepath = fullPathToMesh)
+		## Get mesh info from ply
 		fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
 		verts = getVertsFromBinary(fullPathToMesh)
 
-		# # Get the just imported object.
-		# importedObject = bpy.context.object
+		## Make the just imported object.
 		importedObject = make_and_link_mesh(verts)
 			
 		## Camera
 		camera_object.location = CAMERA_LOCATION
 
-		
 		if ink_mesh is not None:
-			ink_coords = np.array([v.co for v in importedObject.data.vertices])
-			data.append(ink_coords)
+			data.append(verts)
 			if RENDER_FRAMES:
-				coords = [(importedObject.matrix_world @ v.co) for v in importedObject.data.vertices]
 				for i in range(len(ink_mesh.data.vertices)):
-					ink_mesh.data.vertices[i].co = coords[i]
-				# ink_mesh.data.vertices = coords
+					ink_mesh.data.vertices[i].co = verts[i]
 			DeleteObject(importedObject)
 		else:
-			# # Set the material of the object.
-			# if len(importedObject.data.materials):
-			# 	# assign to 1st material slot
-			# 	importedObject.data.materials[0] = material
-			# else:
-			# 	# if there is no material append it
-			# 	importedObject.data.materials.append(material)
-			## Make and link geometry nodes
+			## Make and link geometry nodes -- here is where material is linked as well
 			createGeometryNodes(importedObject, material)
-			# lighting
+			## lighting
 			if not light_created:
 				create_light(camera_object.location)
 				light_created = True
 			
 			ink_mesh = importedObject
-			# importedObject.name = "inkMesh"
-			ink_coords = np.array([v.co for v in ink_mesh.data.vertices])
-			data.append(ink_coords)
+			data.append(verts)
 
 		# Render the scene.
 		if RENDER_FRAMES:
@@ -394,22 +379,9 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 
 	if USE_ANIM:
 		print("USING ANIM")
-		# # Get a reference to the object by name
-		# obj = bpy.data.objects["inkMesh"]
-
-		# # Set the motion blur parameters
-		# obj.motion_blur.shutter = 1.0
-		# obj.motion_blur.shutter_curve = 1.0
-		# obj.motion_blur.shutter_duration = 'CENTER'
-		# obj.motion_blur.use_motion_blur = True
-		# bpy.context.scene.render.use_motion_blur = True
-		# bpy.context.scene.render.motion_blur_shutter = 1.0
-		# bpy.context.scene.render.motion_blur_shutter_curve = 1.0
-		# bpy.context.scene.render.motion_blur_shutter_duration = 'CENTER'
-		# # enable motion blur
-		# bpy.context.scene.render.use_motion_blur = True
-		# # Set the shutter and samples to maximum values
-		# bpy.context.scene.render.motion_blur_shutter = 1.0
+		bpy.context.scene.eevee.use_motion_blur = True
+		bpy.context.scene.eevee.motion_blur_shutter = 1.0
+		bpy.context.scene.eevee.motion_blur_max = 2
 		frames = list(range(startFrame, endFrame))
 		create_animation(data, ink_mesh, frames)
 		render_animation()
