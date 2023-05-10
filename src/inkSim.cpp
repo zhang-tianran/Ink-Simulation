@@ -2,7 +2,7 @@
 #include <fstream>
 #include <chrono>
 
-#define USE_BINARY false // binary or ascii
+#define USE_BINARY true // binary or ascii
 
 InkSim::InkSim(std::string writeDirectory) {
     this->ink_system.init();

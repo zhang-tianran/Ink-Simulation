@@ -131,7 +131,7 @@ Vector3f System::applyWhirlPoolForce(Vector3i index) {
 void System::applyExternalForces(float timeStep) {
     std::unordered_set<Vector3i, hash_func> cellsForcesApplied;
     assert(BUFFER_SIZE >=1);
-    for (std::vector<Particle> ink: m_ink) {
+    for (std::vector<Particle>& ink: m_ink) {
         for (int i = 0; i < ink.size(); i++) {
             Vector3i centerCellIndices = getCellIndexFromPoint(ink[i].position);
             cellsForcesApplied.insert(centerCellIndices);
