@@ -43,6 +43,7 @@ void InkSim::simulate(const float renderTimestep, int totalTimesteps) {
 void InkSim::writeToFile(int frameNum) {
     // Get ink particles
     const std::vector<std::vector<Particle>> allInkParticles = this->ink_system.getInkParticles();
+    #pragma omp parallel for
     for (int i = 0; i < allInkParticles.size(); i++) {
         // file for each drop
         std::string path = this->writeDirectory + "/drop" + std::to_string(i);
@@ -143,7 +144,6 @@ void InkSim::writeWaterGridVelocities() {
             myfile.write((char*)&cellCenter.x(), sizeof(cellCenter.x()));
             myfile.write((char*)&cellCenter.y(), sizeof(cellCenter.y()));
             myfile.write((char*)&cellCenter.z(), sizeof(cellCenter.z()));
-
 
             myfile.write((char*)&cellVel.x(), sizeof(cellVel.x()));
             myfile.write((char*)&cellVel.y(), sizeof(cellVel.y()));

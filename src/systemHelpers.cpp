@@ -24,11 +24,6 @@ Vector3f System::getGradient(int i, int j, int k, VectorXf g){
         gradient[2] -= 1;
     }
 
-    if (gradient.norm() > 1000) {
-//        std::cout<<"GRADIENT" << gradient<<std::endl;
-//        std::cout<<"PRESSURE" << g<<std::endl;
-        assert(gradient.norm() < 1000);
-    }
     return gradient;
 }
 
@@ -80,8 +75,6 @@ Vector3f System::getCurlGradient(int i, int j, int k){
     gradient[1] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].curl.norm() : 0;
     gradient[1] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].curl.norm() : 0;
     gradient[2] += (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].curl.norm() : 0;
-    gradient[2] -= (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].curl.norm() : 0;
-//    std::cout << gradient << std::endl;
     return gradient;
 }
 
@@ -236,7 +229,7 @@ void System::checkNanAndInf() {
     }
 
     // check ink
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (std::vector<Particle> ink: m_ink) {
         for (auto& particle : ink) {
             assert(!hasNan(particle.position) && !hasInf(particle.position));

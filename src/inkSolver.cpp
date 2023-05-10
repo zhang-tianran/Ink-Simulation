@@ -42,7 +42,7 @@ void System::emitParticleHemisphere(float radius) {
 void System::updateParticles(float timeStep){
     checkNanAndInf();
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (std::vector<Particle> ink: m_ink) {
         for (Particle &inkPtcl: ink) {
             // equation 9
