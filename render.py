@@ -12,19 +12,20 @@ import struct
 # meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
 # renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
 
-meshFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"  # Folder without ending "\\".
+meshFolders = ["/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output"]  # Folder without ending "\\".
 renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/render"  # Output folder (without ending "\\").
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
 # -------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
 M_PI = 3.1415926535897932
-END_FRAME = 93
+END_FRAME = 200
 ANIM_STEP = 8 # amt of time between frames
 USE_ANIM = True
 RENDER_FRAMES = False
 RENDER_ENGINE = 'BLENDER_EEVEE'
 CAMERA_LOCATION = [7,7,100]
+NUM_INK_MESH = 2
 
 # Grid Constants
 DIMENSIONS = (8,25,8)
@@ -128,12 +129,12 @@ def setBackgroundColor():
 	bpy.context.scene.world.use_nodes = True
 	bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
 
-def makeInkMaterial():
+def makeInkMaterial(color):
 	material = bpy.data.materials.new(name="Ink Material")
 	material.use_nodes = True
 	material_output = material.node_tree.nodes.get('Material Output')
 	principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
-	principled_bsdf.inputs["Emission"].default_value = (.001, .01, .01, float(.5))
+	principled_bsdf.inputs["Emission"].default_value = color
 	hue_saturation = material.node_tree.nodes.new('ShaderNodeHueSaturation')
 	hue_saturation.location.x -= 200
 	hue_saturation.location.y -= 50
@@ -316,6 +317,39 @@ def make_and_link_mesh(verts):
 #------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
 
+def get_data(startFrame, endFrame, material, ply_folder):
+	# Loop over the frames.
+	ink_mesh = None
+	# light_created = False
+	data = []
+	for currentFrame in range(startFrame, endFrame):
+		## Get mesh info from ply
+		fullPathToMesh = MeshPath(folder = ply_folder, frame = currentFrame)
+		verts = getVertsFromBinary(fullPathToMesh)
+
+		## Make the just imported object.
+		importedObject = make_and_link_mesh(verts)
+			
+		if ink_mesh is not None:
+			data.append(verts)
+			if RENDER_FRAMES:
+				for i in range(len(ink_mesh.data.vertices)):
+					ink_mesh.data.vertices[i].co = verts[i]
+			DeleteObject(importedObject)
+		else:
+			## Make and link geometry nodes -- here is where material is linked as well
+			createGeometryNodes(importedObject, material)			
+			ink_mesh = importedObject
+			data.append(verts)
+
+		# Render the scene.
+		if RENDER_FRAMES:
+			bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
+			# bpy.data.scenes["Scene"].camera = camera_object #UNSURE IF THIS IS OKAY TO COMMENT OUG
+			bpy.ops.render.render(write_still = True) 
+	return ink_mesh, data
+
+
 def RenderSequence(startFrame = 0, endFrame = 1):
 	# Clear the scene:
 	clean_scene()
@@ -326,65 +360,87 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	# create camera
 	camera_object = create_camera(location=(0.0, 0.0, 0.0))
 	bpy.context.scene.camera = camera_object
-
-	# make the material
-	material = makeInkMaterial()
+	camera_object.location = CAMERA_LOCATION
 
 	# create grid
 	if SHOW_GRID:
 		create_grid()
 	create_border()
 
+	## Lighting
+	create_light(camera_object.location)
+
 	# set render settings
 	bpy.context.scene.frame_end = endFrame
 	bpy.context.scene.frame_step = 1
+	bpy.context.scene.eevee.use_motion_blur = True
+	bpy.context.scene.eevee.motion_blur_shutter = 5.0
+	bpy.context.scene.eevee.motion_blur_max = 100
+	bpy.context.scene.eevee.motion_blur_steps = 10
 
-	# Loop over the frames.
-	ink_mesh = None
-	light_created = False
-	data = []
-	for currentFrame in range(startFrame, endFrame):
-		## Get mesh info from ply
-		fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
-		verts = getVertsFromBinary(fullPathToMesh)
+	frames = list(range(startFrame, endFrame))
 
-		## Make the just imported object.
-		importedObject = make_and_link_mesh(verts)
-			
-		## Camera
-		camera_object.location = CAMERA_LOCATION
-
-		if ink_mesh is not None:
-			data.append(verts)
-			if RENDER_FRAMES:
-				for i in range(len(ink_mesh.data.vertices)):
-					ink_mesh.data.vertices[i].co = verts[i]
-			DeleteObject(importedObject)
-		else:
-			## Make and link geometry nodes -- here is where material is linked as well
-			createGeometryNodes(importedObject, material)
-			## lighting
-			if not light_created:
-				create_light(camera_object.location)
-				light_created = True
-			
-			ink_mesh = importedObject
-			data.append(verts)
-
-		# Render the scene.
-		if RENDER_FRAMES:
-			bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
-			bpy.data.scenes["Scene"].camera = camera_object
-			bpy.ops.render.render(write_still = True) 
-
+	for i in range(NUM_INK_MESH):
+		# make the material
+		color  = (.001 + i/NUM_INK_MESH, .01, .01, float(.5))
+		material = makeInkMaterial(color)
+		folder_filepath = meshFolders[i]
+		ink_mesh, data = get_data(startFrame, endFrame, material, folder_filepath)
+		if USE_ANIM:
+			print("USING ANIM")
+			create_animation(data, ink_mesh, frames)
 	if USE_ANIM:
-		print("USING ANIM")
-		bpy.context.scene.eevee.use_motion_blur = True
-		bpy.context.scene.eevee.motion_blur_shutter = 1.0
-		bpy.context.scene.eevee.motion_blur_max = 2
-		frames = list(range(startFrame, endFrame))
-		create_animation(data, ink_mesh, frames)
 		render_animation()
+		
+
+	# # Loop over the frames.
+	# ink_mesh = None
+	# # light_created = False
+	# data = []
+	# for currentFrame in range(startFrame, endFrame):
+	# 	## Get mesh info from ply
+	# 	fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
+	# 	verts = getVertsFromBinary(fullPathToMesh)
+
+	# 	## Make the just imported object.
+	# 	importedObject = make_and_link_mesh(verts)
+			
+	# 	## Camera
+	# 	camera_object.location = CAMERA_LOCATION
+
+	# 	if ink_mesh is not None:
+	# 		data.append(verts)
+	# 		if RENDER_FRAMES:
+	# 			for i in range(len(ink_mesh.data.vertices)):
+	# 				ink_mesh.data.vertices[i].co = verts[i]
+	# 		DeleteObject(importedObject)
+	# 	else:
+	# 		## Make and link geometry nodes -- here is where material is linked as well
+	# 		createGeometryNodes(importedObject, material)
+	# 		# ## lighting
+	# 		# if not light_created:
+	# 		# 	create_light(camera_object.location)
+	# 		# 	light_created = True
+			
+	# 		ink_mesh = importedObject
+	# 		data.append(verts)
+
+	# 	# Render the scene.
+	# 	if RENDER_FRAMES:
+	# 		bpy.data.scenes['Scene'].render.filepath = RenderPath(folder = renderFolder, frame = currentFrame)
+	# 		bpy.data.scenes["Scene"].camera = camera_object
+	# 		bpy.ops.render.render(write_still = True) 
+	# # return ink_mesh, data
+
+	# if USE_ANIM:
+	# 	print("USING ANIM")
+	# 	bpy.context.scene.eevee.use_motion_blur = True
+	# 	bpy.context.scene.eevee.motion_blur_shutter = 5.0
+	# 	bpy.context.scene.eevee.motion_blur_max = 100
+	# 	bpy.context.scene.eevee.motion_blur_steps = 10
+	# 	frames = list(range(startFrame, endFrame))
+	# 	create_animation(data, ink_mesh, frames)
+	# 	render_animation()
 
 
 		
