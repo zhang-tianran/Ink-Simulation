@@ -11,7 +11,6 @@ void System::init() {
     /// Initialize water grid
     initWaterGrid();
 
-
     /// Initialize ink particles
     if (PART_FILE != "")
         initFromFile();
@@ -39,7 +38,6 @@ void System::initWaterGrid() {
                 Cell cell{
                     .oldVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
                     .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
-                    .forceApplied = false,
                     .neighbors = getGridNeighbors(i, j, k)
                 };
 
@@ -86,23 +84,27 @@ Vector3f getRandPosWithinRange(double minX, double maxX,
 
 /// Initializes INIT_NUM_PARTICLES Particle structs
 void System::initParticles() {
-    m_ink.reserve(INIT_NUM_PARTICLES);
-    for (int i = 0; i < INIT_NUM_PARTICLES; i++) {
-        /// Create the particle
-        Particle particle {
-//            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
-            .position = getRandPosWithinRange(WATERGRID_X/2.f-WATERGRID_X/5.f, WATERGRID_X/2.f+WATERGRID_X/5.f,
-                                                          WATERGRID_Y - 1.5, WATERGRID_Y - 1.,
-                                                          WATERGRID_Z/2.f-WATERGRID_Z/3.f, WATERGRID_Z/2.f+WATERGRID_Z/3.f), // CUSTOMIZABLE
-            .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
-            .opacity  = 1.f,
-            .lifeTime = 5.f // CUSTOMIZABLE
-        };
+    for (int i = 0; i < NUM_PARTICLES.size(); i++) {
+        int num_init_particle = NUM_PARTICLES[i];
+        std::vector<Particle> ink;
+        ink.reserve(num_init_particle);
+        for (int i = 0; i < num_init_particle; i++) {
+            /// Create the particle
+            Particle particle {
+    //            .position = getRandPosWithinRange(WATERGRID_X/4.f, WATERGRID_X*3/4.f, WATERGRID_Y - 0.1, WATERGRID_Y - 0.1, WATERGRID_Z/4.f, WATERGRID_Z*3/4.f), // CUSTOMIZABLE
+                .position = getRandPosWithinRange(WATERGRID_X/2.f-WATERGRID_X/5.f, WATERGRID_X/2.f+WATERGRID_X/5.f,
+                                                              WATERGRID_Y - 1.5, WATERGRID_Y - 1.,
+                                                              WATERGRID_Z/2.f-WATERGRID_Z/3.f, WATERGRID_Z/2.f+WATERGRID_Z/3.f), // CUSTOMIZABLE
+                .velocity = Vector3f{0, 0, 0}, // CUSTOMIZABLE
+                .opacity  = 1.f,
+                .lifeTime = 5.f // CUSTOMIZABLE
+            };
 
-        /// Insert into m_ink
-        m_ink.push_back(particle);
+            /// Insert into ink
+            ink.push_back(particle);
+        }
+        m_ink.push_back(ink);
     }
-    assert(m_ink.size() == INIT_NUM_PARTICLES);
 }
 
 void System::initFromFile() {
@@ -113,6 +115,7 @@ void System::initFromFile() {
 
     string line;
     // parse each line in the file
+    std::vector<Particle> ink;
     while (getline(pf, line)) {
         Matrix<float, 1, 6> vals;
         int idx = 0;
@@ -132,13 +135,14 @@ void System::initFromFile() {
             .lifeTime = 5.f // CUSTOMIZABLE
         };
 
-        m_ink.push_back(p);
+        ink.push_back(p);
     }
+    m_ink.push_back(ink);
 }
 
 
 /************************** GETTERS ************************************/
-const std::vector<Particle>& System::getInkParticles() {
+const std::vector<std::vector<Particle>>& System::getInkParticles() {
     return m_ink;
 }
 

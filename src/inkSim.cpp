@@ -2,7 +2,7 @@
 #include <fstream>
 #include <chrono>
 
-#define USE_BINARY true // binary or ascii
+#define USE_BINARY false // binary or ascii
 
 InkSim::InkSim(std::string writeDirectory) {
     this->ink_system.init();
@@ -21,8 +21,6 @@ void InkSim::simulate(const float renderTimestep, int totalTimesteps) {
     float timeSinceLastRender = 0;
     while (timestepCounter <= totalTimesteps) {
         float timeStep = this->ink_system.solve(renderTimestep - timeSinceLastRender);
-//        std::cout << "TIMESTEP INK: " << timeStep << std::endl;
-//        std::cout << "NUM TIMESTEPS: " << timestepCounter << std::endl;
         timeSinceLastRender += timeStep;
         if (timeSinceLastRender>=renderTimestep) {
             writeToFile(currFrame);
@@ -43,51 +41,58 @@ void InkSim::simulate(const float renderTimestep, int totalTimesteps) {
 
 
 void InkSim::writeToFile(int frameNum) {
-    std::string filename = this->writeDirectory + "/" + std::to_string(frameNum) + ".ply";
-    std::ofstream myfile;
-    std::cout << "writing to: " + filename << std::endl;
     // Get ink particles
-    const std::vector<Particle> inkParticles = this->ink_system.getInkParticles();
-    std::string numVertices = std::to_string(inkParticles.size());
-    std::cout << "recording " + numVertices + " particles"<< std::endl;
+    const std::vector<std::vector<Particle>> allInkParticles = this->ink_system.getInkParticles();
+    #pragma omp parallel for
+    for (int i = 0; i < allInkParticles.size(); i++) {
+        // file for each drop
+        std::string path = this->writeDirectory + "/drop" + std::to_string(i);
+        std::filesystem::create_directory(path);
+        std::string filename = path + "/" + std::to_string(frameNum) + ".ply";
+        std::cout << "writing to: " + filename << std::endl;
+        std::ofstream myfile;
 
-    // set up header
-    if (USE_BINARY) {
-        myfile.open(filename, std::ios::binary | std::ios::out); // based off working directory not current file
+        // write inks
+        std::vector<Particle> inkParticles = allInkParticles[i];
+        std::string numVertices = std::to_string(inkParticles.size());
+        std::cout << "recording " + numVertices + " particles"<< std::endl;
         // setup header
-        std::string header = "ply\n"
-                             "format binary_small_endian 1.0\n"
-                             "element vertex " + numVertices + "\n"
-                             "property float x\n"
-                             "property float y\n"
-                             "property float z\n"
-                             "end_header\n";
-        myfile.write(header.c_str(), header.size());
-    } else { /// ascii
-        myfile.open(filename); // based off working directory not current file
-        myfile << "ply\n";
-        myfile << "format ascii 1.0\n";
-        myfile << "element vertex " + numVertices + "\n";
-        myfile << "property float x\n";
-        myfile << "property float y\n";
-        myfile << "property float z\n";
-        myfile << "end_header\n";
-    }
-
-    // input data
-    for(int i = 0; i<inkParticles.size(); i++) {
-        Eigen::Vector3f currParticle = inkParticles[i].position;
         if (USE_BINARY) {
-            myfile.write((char*)&currParticle.x(), sizeof(currParticle.x()));
-            myfile.write((char*)&currParticle.y(), sizeof(currParticle.y()));
-            myfile.write((char*)&currParticle.z(), sizeof(currParticle.z()));
-        } else {
-            Eigen::Vector3f currParticle = inkParticles[i].position;
-            std::string position = std::to_string(currParticle.x()) + " " + std::to_string(currParticle.y()) + " " + std::to_string(currParticle.z());
-            myfile << position + "\n";
+            myfile.open(filename, std::ios::binary | std::ios::out); // based off working directory not current file
+            std::string header = "ply\n"
+                                 "format binary_small_endian 1.0\n"
+                                 "element vertex " + numVertices + "\n"
+                                 "property float x\n"
+                                 "property float y\n"
+                                 "property float z\n"
+                                 "end_header\n";
+            myfile.write(header.c_str(), header.size());
+        } else { /// ascii
+            myfile.open(filename); // based off working directory not current file
+            myfile << "ply\n";
+            myfile << "format ascii 1.0\n";
+            myfile << "element vertex " + numVertices + "\n";
+            myfile << "property float x\n";
+            myfile << "property float y\n";
+            myfile << "property float z\n";
+            myfile << "end_header\n";
         }
+
+        // input data
+        for(int i = 0; i<inkParticles.size(); i++) {
+            Eigen::Vector3f currParticle = inkParticles[i].position;
+            if (USE_BINARY) {
+                myfile.write((char*)&currParticle.x(), sizeof(currParticle.x()));
+                myfile.write((char*)&currParticle.y(), sizeof(currParticle.y()));
+                myfile.write((char*)&currParticle.z(), sizeof(currParticle.z()));
+            } else {
+                Eigen::Vector3f currParticle = inkParticles[i].position;
+                std::string position = std::to_string(currParticle.x()) + " " + std::to_string(currParticle.y()) + " " + std::to_string(currParticle.z());
+                myfile << position + "\n";
+            }
+        }
+        myfile.close();
     }
-    myfile.close();
 }
 
 void InkSim::writeWaterGridVelocities() {
@@ -139,7 +144,6 @@ void InkSim::writeWaterGridVelocities() {
             myfile.write((char*)&cellCenter.x(), sizeof(cellCenter.x()));
             myfile.write((char*)&cellCenter.y(), sizeof(cellCenter.y()));
             myfile.write((char*)&cellCenter.z(), sizeof(cellCenter.z()));
-
 
             myfile.write((char*)&cellVel.x(), sizeof(cellVel.x()));
             myfile.write((char*)&cellVel.y(), sizeof(cellVel.y()));
