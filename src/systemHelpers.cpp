@@ -237,10 +237,12 @@ void System::checkNanAndInf() {
 
     // check ink
     #pragma omp parallel for
-    for (auto& particle : this->m_ink) {
-        assert(!hasNan(particle.position) && !hasInf(particle.position));
-        assert(!hasNan(particle.velocity) && !hasInf(particle.position));
-        assert(particle.velocity.norm() < 10000);
+    for (std::vector<Particle> ink: m_ink) {
+        for (auto& particle : ink) {
+            assert(!hasNan(particle.position) && !hasInf(particle.position));
+            assert(!hasNan(particle.velocity) && !hasInf(particle.position));
+            assert(particle.velocity.norm() < 10000);
+        }
     }
 }
 
@@ -277,8 +279,10 @@ ostream& operator<<(ostream& strm, const System& obj) {
     }
 
     strm << "********* PRINTING PARTICLES ***********\n";
-    for (auto& el : obj.m_ink) {
-        strm << el << endl;
+    for (std::vector<Particle> ink: obj.m_ink) {
+        for (auto& el : ink) {
+            strm << el << endl;
+        }
     }
     return strm;
 }

@@ -27,7 +27,9 @@ const float K_VORT = 1; /// strength of vorticity
 const float VISCOSITY        = .9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
-const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
+//const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
+//const int NUM_DROP = 1;
+const std::vector<int> NUM_PARTICLES = {500, 500};
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.28, 0);
@@ -42,7 +44,6 @@ typedef struct Cell {
     Eigen::Vector3f currVelocity;
 
     Eigen::Vector3f curl;
-    bool forceApplied;
     std::vector<Eigen::Vector3i> neighbors;
 
     // enable printing for debugging
@@ -74,7 +75,7 @@ public:
 
     void init();
     double solve(double timeToNextRender);
-    const std::vector<Particle>& getInkParticles();
+    const std::vector<std::vector<Particle>>& getInkParticles();
     const std::unordered_map<Eigen::Vector3i, Cell, hash_func> getWaterGrid();
 
     // check if particles or watergrid values for pos/vel have inf or nans
@@ -111,7 +112,7 @@ private:
     };
 
     /// Ink
-    std::vector<Particle> m_ink;
+    std::vector<std::vector<Particle>> m_ink;
     void initParticles();
     void updateParticles(float timeStep);
     void emitParticleHemisphere(float radius);
