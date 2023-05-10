@@ -1,17 +1,22 @@
 #include "system.h"
 #include <stdlib.h>
+#include <fstream>
 
 using namespace Eigen;
 using namespace std;
 
-System::System(){}
+System::System() {}
 
 void System::init() {
     /// Initialize water grid
     initWaterGrid();
 
+
     /// Initialize ink particles
-    initParticles();
+    if (PART_FILE != "")
+        initFromFile();
+    else
+        initParticles();
 }
 
 
@@ -31,21 +36,21 @@ void System::initWaterGrid() {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 /// Create the cell
-                Cell cell {
-                    .oldVelocity  = Vector3f(0, 0, 0), // CUSTOMIZABLE
+                Cell cell{
+                    .oldVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
                     .currVelocity = Vector3f(0, 0, 0), // CUSTOMIZABLE
                     .forceApplied = false,
                     .neighbors = getGridNeighbors(i, j, k)
                 };
 
                 /// Insert into m_waterGrid
-                m_waterGrid.insert({Vector3i{i, j, k}, cell});
+                m_waterGrid.insert({ Vector3i{i, j, k}, cell });
             }
         }
     }
-    float product = WATERGRID_X*WATERGRID_Z*WATERGRID_Y;
+    float product = WATERGRID_X * WATERGRID_Z * WATERGRID_Y;
     float size = m_waterGrid.size();
-    assert(size == WATERGRID_X*WATERGRID_Z*WATERGRID_Y);
+    assert(size == WATERGRID_X * WATERGRID_Z * WATERGRID_Y);
     initPressureA();
 }
 
@@ -56,26 +61,26 @@ int nonZeroRand() {
 
 double randBetween(double min, double max)
 {
-    double result = min + ((double) rand() / RAND_MAX) * (max - min);
-    assert(min <= result && result <= max && !isinf(result) && !isnan(result) );
+    double result = min + ((double)rand() / RAND_MAX) * (max - min);
+    assert(min <= result && result <= max && !isinf(result) && !isnan(result));
     return result;
 }
 
 /// Returns a random position within the specified ranges
 Vector3f getRandPosWithinRange(double minX, double maxX,
-                               double minY, double maxY,
-                               double minZ, double maxZ) {
-//    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
-//    assert(!isinf(x) || !isnan(x));
-//    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
-//    assert(!isinf(y) || !isnan(y));
-//    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
-//    assert(!isinf(z) || !isnan(z));
-//      return Vector3f(x, y, z);
+    double minY, double maxY,
+    double minZ, double maxZ) {
+    //    float x = minX + ((maxX - minX) / (nonZeroRand() % 100 + 1));
+    //    assert(!isinf(x) || !isnan(x));
+    //    float y = minY + ((maxY - minY) / (nonZeroRand() % 100 + 1));
+    //    assert(!isinf(y) || !isnan(y));
+    //    float z = minZ + ((maxZ - minZ) / (nonZeroRand() % 100 + 1));
+    //    assert(!isinf(z) || !isnan(z));
+    //      return Vector3f(x, y, z);
     float x = randBetween(minX, maxX);
     float y = randBetween(minY, maxY);
     float z = randBetween(minZ, maxZ);
-    return Vector3f(x,y,z);
+    return Vector3f(x, y, z);
 
 }
 
@@ -99,6 +104,38 @@ void System::initParticles() {
     }
     assert(m_ink.size() == INIT_NUM_PARTICLES);
 }
+
+void System::initFromFile() {
+    // read in stuff from file
+    assert(PART_FILE != "");
+    ifstream pf(PART_FILE);
+    assert(pf.is_open());
+
+    string line;
+    // parse each line in the file
+    while (getline(pf, line)) {
+        Matrix<float, 1, 6> vals;
+        int idx = 0;
+
+        // parse the number in the line
+        string line_copy = line;
+        stringstream s(line_copy);
+        while (getline(s, line_copy, ' ')) {
+            vals[idx] = std::stof(line_copy);
+            idx++;
+        }
+
+        Particle p {
+            .position = Vector3f(vals[0], vals[1], vals[2]),
+            .velocity = Vector3f(vals[3], vals[4], vals[5]),
+            .opacity  = 1.f,
+            .lifeTime = 5.f // CUSTOMIZABLE
+        };
+
+        m_ink.push_back(p);
+    }
+}
+
 
 /************************** GETTERS ************************************/
 const std::vector<Particle>& System::getInkParticles() {

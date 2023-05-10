@@ -9,15 +9,19 @@
 typedef Eigen::SparseMatrix<float> SpMat;
 
 // ============== Global Constants ==============
-const int WATERGRID_X        = 8; /// Water grid length
-const int WATERGRID_Y        = 25; /// Water grid height
-const int WATERGRID_Z        = 8; /// Water grid width
-const float CELL_DIM         = 1; /// Cell dimension (is a cube, so length == width == height)
-const int BUFFER_SIZE        = 2; /// Dictates the number/levels of neighbors
 
-const float DENSITY          = .9; /// Fluid density
+const std::string PART_FILE = "";
+const bool USE_LIFETIME = false;
+const int WATERGRID_X = 8; /// Water grid length
+const int WATERGRID_Y = 25; /// Water grid height
+const int WATERGRID_Z = 8; /// Water grid width
+const float CELL_DIM = 1; /// Cell dimension (is a cube, so length == width == height)
+const int BUFFER_SIZE = 3; /// Dictates the number/levels of neighbors
 
-const float K_VORT           = 2; /// strength of vorticity
+
+const float DENSITY = .95; /// Fluid density
+
+const float K_VORT = 1; /// strength of vorticity
 
 //const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float VISCOSITY        = .9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
@@ -26,7 +30,7 @@ const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.28, 0);
 
 const float K_CFL = 0.2f;
 const float MIN_TIMESTEP = 0.01f;
@@ -56,10 +60,9 @@ typedef struct Particle {
 } Particle;
 
 struct hash_func {
-    size_t operator()(const Eigen::Vector3i &v) const
+    size_t operator()(const Eigen::Vector3i& v) const
     {
-//        std::cout<<v.x()<<v.y()<<v.z()<<std::endl;
-        assert(v.x()>=0 && v.y()>=0 && v.z()>=0);
+        assert(v.x() >= 0 && v.y() >= 0 && v.z() >= 0);
         return 541 * v.x() + 79 * v.y() + 31 * v.z();
     }
 };
@@ -80,6 +83,9 @@ public:
     // enable printing for debugging
     friend std::ostream& operator<<(std::ostream& strm, const System& obj);
 private:
+
+    // init particles
+    void initFromFile();
 
     /// Water Grid
     std::unordered_map<Eigen::Vector3i, Cell, hash_func> m_waterGrid;
@@ -108,6 +114,7 @@ private:
     std::vector<Particle> m_ink;
     void initParticles();
     void updateParticles(float timeStep);
+    void emitParticleHemisphere(float radius);
 
     /// Getters
     Eigen::Vector3f getGradient(int i, int j, int k, Eigen::VectorXf g);
@@ -116,7 +123,7 @@ private:
     Eigen::Vector3f getCurlGradient(int i, int j, int k);
     float           laplacianOperatorOnVelocity(int i, int j, int k, int idx);
     Eigen::Vector3f getVelocity(Eigen::Vector3f pos);
-    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f &pos);
+    Eigen::Vector3i getCellIndexFromPoint(Eigen::Vector3f& pos);
     float           getInterpolatedValue(float x, float y, float z, int idx);
     std::vector<Eigen::Vector3i> getGridNeighbors(int i, int j, int k);
 
@@ -125,6 +132,6 @@ private:
     bool isInBoundsbyIdx(int i, int j, int k);
 
     /// DEBUGGING
-   bool hasNan(Eigen::Vector3f v);
-   bool hasInf(Eigen::Vector3f v);
+    bool hasNan(Eigen::Vector3f v);
+    bool hasInf(Eigen::Vector3f v);
 };

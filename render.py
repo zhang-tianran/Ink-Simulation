@@ -7,6 +7,7 @@
 import bpy
 from typing import Tuple
 import numpy as np
+import struct
 
 # Options.
 # meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
@@ -24,6 +25,7 @@ ANIM_STEP = 8 # amt of time between frames
 USE_ANIM = True
 RENDER_FRAMES = False
 RENDER_ENGINE = 'BLENDER_EEVEE'
+CAMERA_LOCATION = [7,7,100]
 
 # Grid Constants
 DIMENSIONS = (8,25,8)
@@ -283,7 +285,36 @@ def render_animation():
 #------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------
+def getVertsFromBinary(path_to_ply):
+	# Open the PLY file in binary mode
+	with open(path_to_ply, "rb") as f:
+		# Read the header to get the number of vertices and faces
+		header = ""
+		while "end_header" not in header:
+			line = f.readline().decode("utf-8")
+			header += line
+			if "element vertex" in line:
+				num_verts = int(line.split()[-1])
+			else:
+				print("COULD NOT READ NUM VERTICES IN PLY")
 
+		# Read the binary data for the vertices
+		verts = []
+		for i in range(num_verts):
+			vert_data = struct.unpack("<fff", f.read(12))
+			verts.append(vert_data)
+		return verts
+
+def make_and_link_mesh(verts):
+	mesh_data = bpy.data.meshes.new(name="NewMesh")
+	mesh_data.from_pydata(verts, [], [])
+	mesh_data.update()
+
+	# Create a new object and link it to the scene
+	obj = bpy.data.objects.new(name="NewObject", object_data=mesh_data)
+	bpy.context.scene.collection.objects.link(obj)
+	return obj
+	
 def RenderSequence(startFrame = 0, endFrame = 1):
 	# Clear the scene:
 	clean_scene()
@@ -312,15 +343,18 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 	light_created = False
 	data = []
 	for currentFrame in range(startFrame, endFrame):
-		# Import the object (Either obj or ply).
+		# # Import the object (Either obj or ply).
+		# fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
+		# bpy.ops.import_mesh.ply(filepath = fullPathToMesh)
 		fullPathToMesh = MeshPath(folder = meshFolder, frame = currentFrame)
-		bpy.ops.import_mesh.ply(filepath = fullPathToMesh)
+		verts = getVertsFromBinary(fullPathToMesh)
 
-		# Get the just imported object.
-		importedObject = bpy.context.object
+		# # Get the just imported object.
+		# importedObject = bpy.context.object
+		importedObject = make_and_link_mesh(verts)
 			
 		## Camera
-		camera_object.location = [7,7,80]
+		camera_object.location = CAMERA_LOCATION
 
 		
 		if ink_mesh is not None:
@@ -333,13 +367,13 @@ def RenderSequence(startFrame = 0, endFrame = 1):
 				# ink_mesh.data.vertices = coords
 			DeleteObject(importedObject)
 		else:
-			# Set the material of the object.
-			if len(importedObject.data.materials):
-				# assign to 1st material slot
-				importedObject.data.materials[0] = material
-			else:
-				# if there is no material append it
-				importedObject.data.materials.append(material)
+			# # Set the material of the object.
+			# if len(importedObject.data.materials):
+			# 	# assign to 1st material slot
+			# 	importedObject.data.materials[0] = material
+			# else:
+			# 	# if there is no material append it
+			# 	importedObject.data.materials.append(material)
 			## Make and link geometry nodes
 			createGeometryNodes(importedObject, material)
 			# lighting
