@@ -12,10 +12,17 @@ void System::init() {
     initWaterGrid();
 
     /// Initialize ink particles
-    if (PART_FILE != "")
-        initFromFile();
-    else
-        initParticles();
+    std::vector<Particle> ink;
+    ink.reserve(400000);
+    this->m_ink.push_back(ink);
+    for (float i = 0; i < 2*M_PI; i += (M_PI / 60.f)) {
+        emitParticleHemisphere(i);
+    }
+
+//    if (PART_FILE != "")
+//        initFromFile();
+//    else
+//        initParticles();
 }
 
 

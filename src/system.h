@@ -12,9 +12,9 @@ typedef Eigen::SparseMatrix<float> SpMat;
 
 const std::string PART_FILE = "";
 const bool USE_LIFETIME = false;
-const int WATERGRID_X = 8; /// Water grid length
-const int WATERGRID_Y = 25; /// Water grid height
-const int WATERGRID_Z = 8; /// Water grid width
+const int WATERGRID_X = 20; /// Water grid length
+const int WATERGRID_Y = 45; /// Water grid height
+const int WATERGRID_Z = 20; /// Water grid width
 const float CELL_DIM = 1; /// Cell dimension (is a cube, so length == width == height)
 const int BUFFER_SIZE = 3; /// Dictates the number/levels of neighbors
 
@@ -24,7 +24,7 @@ const float DENSITY = .95; /// Fluid density
 const float K_VORT = 1; /// strength of vorticity
 
 //const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
-const float VISCOSITY        = .9; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
+const float VISCOSITY        = 1.0016;  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 
 //const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
@@ -32,10 +32,10 @@ const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
 const std::vector<int> NUM_PARTICLES = {500, 500};
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
-const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.28, 0);
+const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.1, 0);
 
 const float K_CFL = 0.2f;
-const float MIN_TIMESTEP = 0.01f;
+const float MIN_TIMESTEP = 0.005f;
 const float MAX_TIMESTEP = 1.f;
 // ==============================================
 
@@ -99,6 +99,7 @@ private:
     void  applyExternalForces(float timeStep);
     void updateForce(Eigen::Vector3i idx, double timeStep);
     Eigen::Vector3f getVort(int i, int j, int k);
+    void applyVorticity(float timeStep);
     void  applyViscosity(float timeStep);
     Eigen::VectorXf calculatePressure(float timeStep);
     void  applyPressure(float timeStep);

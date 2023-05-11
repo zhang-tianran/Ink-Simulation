@@ -52,13 +52,40 @@ void System::updateVelocityField(float timeStep) {
     applyConvection(timeStep);
     checkNanAndInf();
 
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
+
     applyExternalForces(timeStep);
     checkNanAndInf();
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
 
     applyViscosity(timeStep);
     checkNanAndInf();
 
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
+
     applyPressure(timeStep);
+    checkNanAndInf();
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
+
+    applyVorticity(timeStep);
     checkNanAndInf();
 
     /// Update each cell's old_velocity to be the curr_velocity
@@ -159,8 +186,8 @@ void System::applyExternalForces(float timeStep) {
 
 void System::updateForce(Vector3i idx, double timeStep){
     m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
-    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
-    m_waterGrid[idx].currVelocity += timeStep * getVort(idx[0],idx[1],idx[2]); /// Apply vorticity confinement NOTE THIS WAS SHIFTED IN MAIN
+   // m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
+   // m_waterGrid[idx].currVelocity += timeStep * getVort(idx[0],idx[1],idx[2]); /// Apply vorticity confinement NOTE THIS WAS SHIFTED IN MAIN
 }
 
 Vector3f System::getVort(int i, int j, int k){
@@ -171,6 +198,27 @@ Vector3f System::getVort(int i, int j, int k){
     Vector3f N = getCurlGradient(i, j, k) / curl.norm();
     Vector3f F_vort = K_VORT * (N.cross(curl));
     return F_vort;
+}
+
+void System::applyVorticity(float timeStep) {
+    #pragma omp parallel for collapse(3)
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                // calculate curl
+                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
+            }
+        }
+    }
+
+    #pragma omp parallel for collapse(3)
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep*getVort(i, j, k);
+            }
+        }
+    }
 }
 
 /// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity

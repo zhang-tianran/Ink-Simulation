@@ -47,7 +47,7 @@ void InkSim::writeToFile(int frameNum) {
     for (int i = 0; i < allInkParticles.size(); i++) {
         // file for each drop
         std::string path = this->writeDirectory + "/drop" + std::to_string(i);
-        std::filesystem::create_directory(path);
+       // std::filesystem::create_directory(path);
         std::string filename = path + "/" + std::to_string(frameNum) + ".ply";
         std::cout << "writing to: " + filename << std::endl;
         std::ofstream myfile;
