@@ -48,11 +48,11 @@ Vector3f System::getCurl(int i, int j, int k){
     curl[0] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].oldVelocity[2] : 0;
     curl[0] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].oldVelocity[2] : 0;
     /// uy / z
-    curl[0] -= (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[1] : 0;
+    curl[0] -= (k+1 < WATERGRID_Z) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[1] : 0;
     curl[0] += (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].oldVelocity[1] : 0;
 
     /// ux / z
-    curl[1] += (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[0] : 0;
+    curl[1] += (k+1 < WATERGRID_Z) ? m_waterGrid[Vector3i(i, j, k+1)].oldVelocity[0] : 0;
     curl[1] -= (k-1 >= 0         ) ? m_waterGrid[Vector3i(i, j, k-1)].oldVelocity[0] : 0;
     /// uz / x
     curl[1] -= (i+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i+1, j, k)].oldVelocity[2] : 0;
@@ -74,7 +74,8 @@ Vector3f System::getCurlGradient(int i, int j, int k){
     gradient[0] -= (i-1 >= 0         ) ? m_waterGrid[Vector3i(i-1, j, k)].curl.norm() : 0;
     gradient[1] += (j+1 < WATERGRID_Y) ? m_waterGrid[Vector3i(i, j+1, k)].curl.norm() : 0;
     gradient[1] -= (j-1 >= 0         ) ? m_waterGrid[Vector3i(i, j-1, k)].curl.norm() : 0;
-    gradient[2] += (k+1 < WATERGRID_X) ? m_waterGrid[Vector3i(i, j, k+1)].curl.norm() : 0;
+    gradient[2] += (k+1 < WATERGRID_Z) ? m_waterGrid[Vector3i(i, j, k+1)].curl.norm() : 0;
+    gradient[2] -= (k-1 < 0          ) ? m_waterGrid[Vector3i(i, j, k-1)].curl.norm() : 0;
     return gradient;
 }
 
