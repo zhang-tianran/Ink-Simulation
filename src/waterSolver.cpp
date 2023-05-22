@@ -1,20 +1,19 @@
 #include "system.h"
 #include <math.h>
-#include <unordered_set>
+
 
 using namespace Eigen;
 
-#define DO_BFECC false
-
-double System::updateWaterGrid() {
-    double timeStep = calcTimeStep();
+double System::updateWaterGrid(double timeToNextRender) {
+    double timeStep = calcTimeStep(timeToNextRender);
     updateVelocityField(timeStep);
     return timeStep;
 }
 
+double System::calcTimeStep(double timeToNextRender) {
+    float maxVelocity = 0;
 
-double System::calcTimeStep() {
-    double maxVelocity = 0;
+    #pragma omp parallel for
     for (auto kv : m_waterGrid) {
         if (maxVelocity < kv.second.oldVelocity.norm()) {
             maxVelocity = kv.second.oldVelocity.norm();
@@ -28,17 +27,18 @@ double System::calcTimeStep() {
         return MIN_TIMESTEP;
     } else {
 
-        double timeStep = K_CFL * (CELL_DIM / maxVelocity);
+        float timeStep = K_CFL * (CELL_DIM / maxVelocity);
 
         timeStep = std::max(std::min(timeStep, MAX_TIMESTEP), MIN_TIMESTEP);
 
         assert(timeStep <= MAX_TIMESTEP && timeStep >= MIN_TIMESTEP);
+        timeStep = std::min(timeToNextRender, (double)timeStep);
         return timeStep;
     }
 }
 
 /// See "Fluid Flow 4 the Rest of Us" Paper for more details
-void System::updateVelocityField(double timeStep) {
+void System::updateVelocityField(float timeStep) {
     /// Error Checking
     #pragma omp parallel for
     for (auto &kv : m_waterGrid) {
@@ -46,20 +46,20 @@ void System::updateVelocityField(double timeStep) {
     }
 
     /// debugging
-#ifndef QT_NO_DEBUG
     checkNanAndInf();
-#endif
 
     /// Navier-Stokes equation
-    applyBFECC(timeStep);
-#ifndef QT_NO_DEBUG
+    applyConvection(timeStep);
     checkNanAndInf();
-#endif
+
+    /// Update each cell's old_velocity to be the curr_velocity
+    #pragma omp parallel for
+    for (auto &kv : m_waterGrid) {
+        kv.second.oldVelocity = kv.second.currVelocity;
+    }
 
     applyExternalForces(timeStep);
-#ifndef QT_NO_DEBUG
     checkNanAndInf();
-#endif
 
     /// Update each cell's old_velocity to be the curr_velocity
     #pragma omp parallel for
@@ -68,9 +68,7 @@ void System::updateVelocityField(double timeStep) {
     }
 
     applyViscosity(timeStep);
-#ifndef QT_NO_DEBUG
     checkNanAndInf();
-#endif
 
     /// Update each cell's old_velocity to be the curr_velocity
     #pragma omp parallel for
@@ -78,10 +76,8 @@ void System::updateVelocityField(double timeStep) {
         kv.second.oldVelocity = kv.second.currVelocity;
     }
 
-   applyPressure(timeStep);
-#ifndef QT_NO_DEBUG
+    applyPressure(timeStep);
     checkNanAndInf();
-#endif
 
     /// Update each cell's old_velocity to be the curr_velocity
     #pragma omp parallel for
@@ -89,7 +85,7 @@ void System::updateVelocityField(double timeStep) {
         kv.second.oldVelocity = kv.second.currVelocity;
     }
 
-//    applyVorticity(timeStep);
+    applyVorticity(timeStep);
     checkNanAndInf();
 
     /// Update each cell's old_velocity to be the curr_velocity
@@ -99,254 +95,146 @@ void System::updateVelocityField(double timeStep) {
     }
 }
 
-Vector3d System::traceParticle(double x, double y, double z, double t) {
-    Vector3d vel = getVelocity(Vector3d(x, y, z));
-    vel = getVelocity(Vector3d(x + 0.5*t*vel.x(), y + 0.5*t*vel.y(), z + 0.5*t*vel.z()));
-    return Vector3d(x, y, z) + t*vel;
+Vector3f System::traceParticle(float x, float y, float z, float t) {
+    Vector3f vel = getVelocity(Vector3f(x, y, z));
+    vel = getVelocity(Vector3f(x + 0.5*t*vel.x(), y + 0.5*t*vel.y(), z + 0.5*t*vel.z()));
+    return Vector3f(x, y, z) + t*vel;
 }
 
-Eigen::Vector3d System::traceParticle(double x, double y, double z, double t, CellBFECCField field) {
-    Vector3d vel = getVelocity(Vector3d(x, y, z), field);
-    vel = getVelocity(Vector3d(x + 0.5*t*vel.x(), y + 0.5*t*vel.y(), z + 0.5*t*vel.z()), field);
-    return Vector3d(x, y, z) + t*vel;
+Vector3i System::getCellIndexFromPoint(Vector3f &pos) {
+    return Vector3i{floor(pos.x()), floor(pos.y()), floor(pos.z())};
 }
 
 /// Applies the convection term in the Navier-Stokes equation to each cell's velocity
-void System::applyConvection(double timeStep, CellBFECCField field) {
+void System::applyConvection(float timeStep) {
     /// Update each cell's curr_velocity in the waterGrid...
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                /// Trace particle, fields are input b/c we want to get the previous iterations velocity (i.e. vel when we want to find USQUIGGLY will be USTAR)
-                Vector3d virtualParticlePosX;
-                Vector3d virtualParticlePosY;
-                Vector3d virtualParticlePosZ;
-                Vector3d virtualParticleVelocity{0, 0, 0};
-                switch(field) {
-                    case OLDVELOCITY: /// Note: This case never gets called/never happens
-                        break;
-                    case USTARFORWARD: /// 1) Starting from oldVelocity, calculate uStarForward
-                        virtualParticlePosX = traceParticle(i +  CELL_DIM,      j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, OLDVELOCITY);
-                        virtualParticlePosY = traceParticle(i + (CELL_DIM/2.f), j +  CELL_DIM,      k + (CELL_DIM/2.f), timeStep, OLDVELOCITY);
-                        virtualParticlePosZ = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k +  CELL_DIM,      timeStep, OLDVELOCITY);
+                Vector3f virtualParticlePos = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), -timeStep);
 
-                        if (isInBounds(virtualParticlePosX.x(), virtualParticlePosX.y(), virtualParticlePosX.z())) {
-                            virtualParticleVelocity.x() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosX)].oldVelocity.x();
-                        }
-                        if (isInBounds(virtualParticlePosY.x(), virtualParticlePosY.y(), virtualParticlePosY.z())) {
-                            virtualParticleVelocity.y() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosY)].oldVelocity.y();
-                        }
-                        if (isInBounds(virtualParticlePosZ.x(), virtualParticlePosZ.y(), virtualParticlePosZ.z())) {
-                            virtualParticleVelocity.z() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosZ)].oldVelocity.z();
-                        }
-                        break;
-                    case USTAR: /// 2) Starting from uStarForward, calculate uStar
-                        virtualParticlePosX = traceParticle(i +  CELL_DIM,      j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, USTARFORWARD);
-                        virtualParticlePosY = traceParticle(i + (CELL_DIM/2.f), j +  CELL_DIM,      k + (CELL_DIM/2.f), timeStep, USTARFORWARD);
-                        virtualParticlePosZ = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k +  CELL_DIM,      timeStep, USTARFORWARD);
-
-                        if (isInBounds(virtualParticlePosX.x(), virtualParticlePosX.y(), virtualParticlePosX.z())) {
-                            virtualParticleVelocity.x() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosX)].uStarForward.x();
-                        }
-                        if (isInBounds(virtualParticlePosY.x(), virtualParticlePosY.y(), virtualParticlePosY.z())) {
-                            virtualParticleVelocity.y() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosY)].uStarForward.y();
-                        }
-                        if (isInBounds(virtualParticlePosZ.x(), virtualParticlePosZ.y(), virtualParticlePosZ.z())) {
-                            virtualParticleVelocity.z() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosZ)].uStarForward.z();
-                        }
-                        break;
-                    case CURRVELOCITY: /// 4) Starting from uSquiggly, calculate currVelocity
-                        virtualParticlePosX = traceParticle(i +  CELL_DIM,      j + (CELL_DIM/2.f), k + (CELL_DIM/2.f), timeStep, USQUIGGLY);
-                        virtualParticlePosY = traceParticle(i + (CELL_DIM/2.f), j +  CELL_DIM,      k + (CELL_DIM/2.f), timeStep, USQUIGGLY);
-                        virtualParticlePosZ = traceParticle(i + (CELL_DIM/2.f), j + (CELL_DIM/2.f), k +  CELL_DIM,      timeStep, USQUIGGLY);
-
-                        if (isInBounds(virtualParticlePosX.x(), virtualParticlePosX.y(), virtualParticlePosX.z())) {
-                            virtualParticleVelocity.x() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosX)].uSquiggly.x();
-                        }
-                        if (isInBounds(virtualParticlePosY.x(), virtualParticlePosY.y(), virtualParticlePosY.z())) {
-                            virtualParticleVelocity.y() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosY)].uSquiggly.y();
-                        }
-                        if (isInBounds(virtualParticlePosZ.x(), virtualParticlePosZ.y(), virtualParticlePosZ.z())) {
-                            virtualParticleVelocity.z() = m_waterGrid[getCellIndexFromPoint(virtualParticlePosZ)].uSquiggly.z();
-                        }
-                        break;
-                    case USQUIGGLY: /// 3) Calculate error on the cell we are currently on (not using particle trace on this one aka not actually using virtualParticlePos here)
-                        break;
+                if (!isInBounds(virtualParticlePos.x(), virtualParticlePos.y(), virtualParticlePos.z())) {
+                    continue;
                 }
 
-                /// Updating fields
-                switch(field) {
-                    case OLDVELOCITY: /// Note: This case never gets called/never happens
-                        break;
-                    case USTARFORWARD: /// 1) Starting from oldVelocity, calculate uStarForward
-                        if (DO_BFECC)
-                            m_waterGrid[Vector3i(i, j, k)].uStarForward = virtualParticleVelocity;
-                        else
-                            m_waterGrid[Vector3i(i, j, k)].currVelocity = virtualParticleVelocity;
-                        break;
-                    case USTAR: /// 2) Starting from uStarForward, calculate uStar
-                        m_waterGrid[Vector3i(i, j, k)].uStar        = virtualParticleVelocity;
-                        break;
-                    case CURRVELOCITY: /// 4) Starting uStar, calculate currVelocity
-                        m_waterGrid[Vector3i(i, j, k)].currVelocity = virtualParticleVelocity;
-                        break;
-                    case USQUIGGLY: /// 3) Calculate error on the cell we are currently on (not using particle trace on this one)
-                        Vector3d error = (m_waterGrid[Vector3i(i, j, k)].uStar - m_waterGrid[Vector3i(i, j, k)].oldVelocity) / 2.f;
-                        m_waterGrid[Vector3i(i, j, k)].uSquiggly    = m_waterGrid[Vector3i(i, j, k)].oldVelocity - error;
-                        break;
-                }
+                m_waterGrid[Vector3i(i, j, k)].currVelocity = m_waterGrid.at(getCellIndexFromPoint(virtualParticlePos)).oldVelocity;
+
+                // calculate curl
+                m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
             }
         }
     }
 }
 
-/// Applies BFECC algorithm to convection term in Navier-Stokes equation
-void System::applyBFECC(double timeStep) {
-    /// 1) apply backwards particle trace to get u*_{n+1}
-    applyConvection(-timeStep, USTARFORWARD); /// forward in time update
-    
-    if (DO_BFECC) {
-        /// 2) find reverse of backwards particle trace from u*_{n+1} to get u*_{n}
-        applyConvection(timeStep, USTAR); /// backward in time update
-
-        /// 3) starting from part 3 - estimate error for usquiggle
-        applyConvection(-timeStep, USQUIGGLY); /// We're not actually moving in any direction for time step
-
-        /// 4) starting from part 4 - do a backwards particle trace for currVelocity
-        applyConvection(-timeStep, CURRVELOCITY); /// forward in time update
-    }
-
-}
-
-/// returns a random double [-1, 1]
-double zeroOneNoise() {
-    double noise = (rand() % 10) / 10.f;
+/// returns a random float [-1, 1]
+float zeroOneNoise() {
+    float noise = (rand() % 10) / 10.f;
     if (noise > 0.5f) { noise *= -1.f; }
     return noise;
 }
 
-/// Calculates an whirlpool external force
-Vector3d System::applyWhirlPoolForce(Vector3i index) {
-    /// Calculate center (independent of y pos)
-    Vector3d center(WATERGRID_X/2.F, 0, WATERGRID_Z/2.F);
+Vector3f System::applyWhirlPoolForce(Vector3i index) {
+    // Calculate center (independent of y pos)
+    Vector3f center(WATERGRID_X/2.F, 0, WATERGRID_Z/2.F);
 
-    /// Get unit vector from center axis to index
-    Vector3d v(index.x()-center.x(), 0, index.z()-center.z());
+    // Get unit vector from center axis to index
+    Vector3f v(index.x()-center.x(), 0, index.z()-center.z());
     v.normalize();
 
-    /// Get perpendicular
-    Vector3d whirl = Vector3d(0, 1.f, 0).cross(v);
+    // Get perpendicular
+    Vector3f whirl = Vector3f(0, 1.f, 0).cross(v);
 
-    /// Add some noise
+    // Add some noise
     whirl[0] += zeroOneNoise() * 0.1;
     whirl[1] += zeroOneNoise();
     whirl[2] += zeroOneNoise() * 0.1;
 
-    /// Return the cross product
+    // Return the cross product
     return whirl * 0.4f;
 }
 
-///// Applies the external force term in the Navier-Stokes equation to each cell's velocity
-//void System::applyExternalForces(float timeStep) {
-//    std::vector<Vector3i> cellsForcesApplied;
-//    for (int i = 0; i < m_ink.size(); i++) {
-//        Particle currParticle = m_ink[i];
-//        Vector3i centerCellIndices = getCellIndexFromPoint(currParticle.position);
-//        Cell centerCell = m_waterGrid[centerCellIndices];
-//        if (centerCell.forceApplied == false) {
-//            updateForce(centerCellIndices, timeStep);
-//            cellsForcesApplied.push_back(centerCellIndices);
-//        }
-//        std::vector<Vector3i> neighbors = centerCell.neighbors;
-//        for (int j = 0; j < neighbors.size(); j++) {
-//            if (m_waterGrid[neighbors[j]].forceApplied == false) {
-//                updateForce(neighbors[j], timeStep);
-//                cellsForcesApplied.push_back(neighbors[j]);
-//            }
-//        }
-//    }
-
-//    #pragma omp parallel for
-//    for (Vector3i cellIdx: cellsForcesApplied) {
-//        m_waterGrid[cellIdx].forceApplied = false;
-//    }
-//}
-
 /// Applies the external force term in the Navier-Stokes equation to each cell's velocity
-void System::applyExternalForces(double timeStep) {
+void System::applyExternalForces(float timeStep) {
     std::unordered_set<Vector3i, hash_func> cellsForcesApplied;
-    for (int i = 0; i < m_ink.size(); i++) {
-        Vector3i centerCellIndices = getCellIndexFromPoint(m_ink[i].position);
-        cellsForcesApplied.insert(centerCellIndices);
-        std::vector<Vector3i> neighbors = m_waterGrid[centerCellIndices].neighbors;
-        for (int j = 0; j < neighbors.size(); j++) {
-            cellsForcesApplied.insert(neighbors[j]);
-            std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[j]].neighbors;
-            cellsForcesApplied.insert(neighbors2.begin(), neighbors2.end());
+    assert(BUFFER_SIZE >=1);
+    for (std::vector<Particle>& ink: m_ink) {
+        for (int i = 0; i < ink.size(); i++) {
+            Vector3i centerCellIndices = getCellIndexFromPoint(ink[i].position);
+            cellsForcesApplied.insert(centerCellIndices);
+            std::vector<Vector3i> neighbors = m_waterGrid[centerCellIndices].neighbors;
+            for (int j = 0; j < neighbors.size(); j++) {
+                cellsForcesApplied.insert(neighbors[j]);
+                if (BUFFER_SIZE >=2) {
+                    std::vector<Vector3i> neighbors2 = m_waterGrid[neighbors[j]].neighbors;
+                    for (int k = 0; k < neighbors2.size(); k++) {
+                        cellsForcesApplied.insert(neighbors2[k]);
+                        if (BUFFER_SIZE >=3) {
+                            std::vector<Vector3i> neighbors3 = m_waterGrid[neighbors2[k]].neighbors;
+                            cellsForcesApplied.insert(neighbors3.begin(), neighbors3.end());
+                        }
+                    }
+                }
+            }
         }
     }
+
     for (Vector3i cellIdx: cellsForcesApplied) {
         updateForce(cellIdx, timeStep);
     }
 }
 
 void System::updateForce(Vector3i idx, double timeStep){
-
     m_waterGrid[idx].currVelocity += timeStep * gravity; /// Apply gravity
-//    m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
-    auto v = m_waterGrid[idx];
-    m_waterGrid[idx].forceApplied = true;
+   // m_waterGrid[idx].currVelocity += timeStep * applyWhirlPoolForce(idx); /// Apply whirlpool force
+   // m_waterGrid[idx].currVelocity += timeStep * getVort(idx[0],idx[1],idx[2]); /// Apply vorticity confinement NOTE THIS WAS SHIFTED IN MAIN
 }
 
-/// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity
-void System::applyViscosity(double timeStep) {
-    /// For each cell, apply the viscosity to each cell's currVelocity
-    #pragma omp parallel for collapse(3)
-    for (int i = 0; i < WATERGRID_X; i++) {
-        for (int j = 0; j < WATERGRID_Y; j++) {
-            for (int k = 0; k < WATERGRID_Z; k++) {
-                double u_x = laplacianOperatorOnVelocity(i, j, k, 0);
-                double u_y = laplacianOperatorOnVelocity(i, j, k, 1);
-                double u_z = laplacianOperatorOnVelocity(i, j, k, 2);
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * VISCOSITY * Vector3d(u_x, u_y, u_z);
-            }
-        }
+Vector3f System::getVort(int i, int j, int k){
+    Vector3f curl = m_waterGrid[Vector3i(i, j, k)].curl;
+    if (curl == Vector3f(0, 0, 0)) {
+        return Vector3f(0, 0, 0);
     }
+    Vector3f N = getCurlGradient(i, j, k) / curl.norm();
+    Vector3f F_vort = K_VORT * (N.cross(curl));
+    return F_vort;
 }
 
-
-void System::applyVorticity(double timestep) {
-    /// For each cell, calculate the curl
+void System::applyVorticity(float timeStep) {
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
+                // calculate curl
                 m_waterGrid[Vector3i(i, j, k)].curl = getCurl(i, j, k);
             }
         }
     }
 
-    /// For each cell, apply the vorticity confinement force
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                m_waterGrid[Vector3i(i, j, k)].currVelocity += timestep * getVort(Vector3i(i, j, k));
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep*getVort(i, j, k);
             }
         }
     }
 }
 
-
-Vector3d System::getVort(Vector3i idx){
-    Vector3d curl = m_waterGrid[idx].curl;
-    if (curl == Vector3d(0, 0, 0)) {
-        return Vector3d(0, 0, 0);
+/// Applies the viscosity term in the Navier-Stokes equation to each cell's velocity
+void System::applyViscosity(float timeStep) {
+    /// For each cell, apply the viscosity to each cell's currVelocity
+    #pragma omp parallel for collapse(3)
+    for (int i = 0; i < WATERGRID_X; i++) {
+        for (int j = 0; j < WATERGRID_Y; j++) {
+            for (int k = 0; k < WATERGRID_Z; k++) {
+                float u_x = laplacianOperatorOnVelocity(i, j, k, 0);
+                float u_y = laplacianOperatorOnVelocity(i, j, k, 1);
+                float u_z = laplacianOperatorOnVelocity(i, j, k, 2);
+                m_waterGrid[Vector3i(i, j, k)].currVelocity += timeStep * VISCOSITY * Vector3f(u_x, u_y, u_z);
+            }
+        }
     }
-    Vector3d N = getCurlGradient(idx[0], idx[1], idx[2]) / curl.norm();
-    Vector3d F_vort = K_VORT * (N.cross(curl));
-    return F_vort;
 }
 
 void System::initPressureA() {
@@ -358,7 +246,7 @@ void System::initPressureA() {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
                 assert(row_idx >= 0 && row_idx < n);
-                std::vector<Vector3i> neighbors = m_waterGrid[Vector3i(i, j, k)].neighbors;
+                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
                 assert(neighbors.size() <= 6 && neighbors.size() > 2);
                 for (Vector3i neighbor : neighbors) {
                     A.insert(row_idx, grid2mat(neighbor[0], neighbor[1], neighbor[2])) = 1;
@@ -373,32 +261,33 @@ void System::initPressureA() {
 }
 
 /// AP = B (equation 13)
-VectorXd System::calculatePressure(double timeStep) {
+VectorXf System::calculatePressure(float timeStep) {
     int n = WATERGRID_X * WATERGRID_Y * WATERGRID_Z;
-    VectorXd b(n, 1);
+    VectorXf b(n, 1);
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
                 int row_idx = grid2mat(i, j, k);
-                double divergence =  getDivergence(i, j, k);
-                int ki = 6 - m_waterGrid[Vector3i(i, j, k)].neighbors.size();
+                float divergence =  getDivergence(i, j, k);
+                std::vector<Vector3i> neighbors = getGridNeighbors(i, j, k);
+                int ki = 6 - neighbors.size();
                 b[row_idx] = ((DENSITY * CELL_DIM) / timeStep) * divergence - ki * ATMOSPHERIC_PRESSURE;
             }
         }
     }
-    VectorXd pressure = llt.solve(b);
+    VectorXf pressure = llt.solve(b);
     return pressure;
 }
 
 /// Applies the pressure term in the Navier-Stokes equation to each cell's velocity
-void System::applyPressure(double timeStep) {
-    VectorXd pressure = calculatePressure(timeStep);
+void System::applyPressure(float timeStep) {
+    VectorXf pressure = calculatePressure(timeStep);
     #pragma omp parallel for collapse(3)
     for (int i = 0; i < WATERGRID_X; i++) {
         for (int j = 0; j < WATERGRID_Y; j++) {
             for (int k = 0; k < WATERGRID_Z; k++) {
-                Vector3d gradient = getGradient(i, j, k, pressure);
+                Vector3f gradient = getGradient(i, j, k, pressure);
                 assert(gradient.norm() < 10000);
                 m_waterGrid[Vector3i(i, j, k)].currVelocity -= (timeStep / (DENSITY * CELL_DIM)) * gradient;
             }

@@ -22,6 +22,6 @@ int main(int argc, char* argv[])
     std::filesystem::create_directory(path);
 
     InkSim sim(path);
-    sim.simulate(5, 1000); // TODO: input stuff potentially
+    sim.simulate(.35, 2000); // TODO: input stuff potentially
     a.exit();
 }
