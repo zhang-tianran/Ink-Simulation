@@ -2,6 +2,8 @@
 
 This program simulates ink diffusion in water through physical-based methods. It updates the water grid by solving incompressible Navier-Stokes equations at each timestep, and computes ink movement using the RK2 method based on the water velocity. The resulting ink particles are rendered as vertex data in Blender, featuring motion blur.
 
+![still 2](assets/still_2.png)
+
 ## General Approach
 ![pipeline](assets/pipeline.png)
 
@@ -36,7 +38,6 @@ The render script loops through the `.ply` files, stores the vertex data of each
 
 ![still 1](assets/still_1.png)
 ![still 3](assets/still_3.png)
-![still 2](assets/still_2.png)
 
 ## Running the code
 **Requirements**\
