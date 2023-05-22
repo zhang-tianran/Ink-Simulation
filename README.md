@@ -12,6 +12,7 @@ The 3D water grid is implemented with the general fluid simulation method. The v
 
 ### Ink flow
 The position and velocity of each ink particle are updated using RK2 method, enpending entirely on water grid. 
+
 ![particle update](assets/RK2.png)
 
 ### Rendering
@@ -20,12 +21,15 @@ The render script loops through the `.ply` files, stores the vertex data of each
 ## Results
 
 **10k particles 8x25x8 grid**
+
 ![ink sim 1](assets/10k_8x25x8.gif)
 
 **20k particles 14x30x14 grid**
+
 ![ink sim 2](assets/20k_14x30x14.gif)
 
 **100k particles 20x45x20 grid**
+
 ![ink sim 3](assets/100k_20x45x20.gif)
 
 **Still Frames**
