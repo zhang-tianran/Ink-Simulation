@@ -74,7 +74,6 @@ void System::updateParticles(float timeStep){
                 inkPtcl.position[2] = min(max(inkPtcl.position[2], 0.01f), WATERGRID_Z*CELL_DIM-0.01f);
             }
 
-
             if (USE_LIFETIME) {
                 inkPtcl.lifeTime -= timeStep;
                 // TODO: idk if this is good, but it assumes starting lifetime is 5f

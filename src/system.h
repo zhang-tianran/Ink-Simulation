@@ -11,13 +11,16 @@ typedef Eigen::SparseMatrix<float> SpMat;
 // ============== Global Constants ==============
 
 const std::string PART_FILE = "";
-const bool USE_LIFETIME = false;
+
 const int WATERGRID_X = 20; /// Water grid length
 const int WATERGRID_Y = 45; /// Water grid height
 const int WATERGRID_Z = 20; /// Water grid width
+
+const std::vector<int> NUM_PARTICLES = {10000, 10000}; // particles per drop
+
+const bool USE_LIFETIME = false;
 const float CELL_DIM = 1; /// Cell dimension (is a cube, so length == width == height)
 const int BUFFER_SIZE = 3; /// Dictates the number/levels of neighbors
-
 
 const float DENSITY = .95; /// Fluid density
 
@@ -26,10 +29,6 @@ const float K_VORT = 1; /// strength of vorticity
 //const float VISCOSITY        = 1.0016; /// 1.0016  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float VISCOSITY        = 1.0016;  /// Fluid viscosity. The higher the viscosity, the thicker the liquid.
 const float ATMOSPHERIC_PRESSURE = 1; /// Starting number of particles
-
-//const int INIT_NUM_PARTICLES = 10000; /// Starting number of particles
-//const int NUM_DROP = 1;
-const std::vector<int> NUM_PARTICLES = {500, 500};
 
 //const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.58, 0);
 const Eigen::Vector3f gravity = Eigen::Vector3f(0, -0.1, 0);

@@ -9,10 +9,8 @@ from typing import Tuple
 import struct
 
 # Options.
-# meshFolder = "/Users/helenhuang/course/cs2240/DaDDi/output"  # Folder without ending "\\".
-# renderFolder = "/Users/helenhuang/course/cs2240/DaDDi/renders"  # Output folder (without ending "\\").
-meshFolders = ["/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/drop0", "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/drop1"]  # Folder without ending "\\".
-renderFolder = "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/render"  # Output folder (without ending "\\").
+meshFolders = ["output/drop0", "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/drop1"]  # Folder without ending "\\".
+renderFolder = "output/render"  # Output folder (without ending "\\").
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
 # -------------------------------------------------------------------------------------------------------------
