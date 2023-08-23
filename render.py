@@ -9,7 +9,7 @@ from typing import Tuple
 import struct
 
 # Options.
-meshFolders = ["output/drop0", "/Users/mandyhe/Documents/Spring2023/Graphics/DaDDi/output/drop1"]  # Folder without ending "\\".
+meshFolders = ["output/drop0", "output/drop1"]  # Folder without ending "\\".
 renderFolder = "output/render"  # Output folder (without ending "\\").
 AmountOfNumbers = 1  # Amount of numbers in filepath, e.g., 000010.ply
 
